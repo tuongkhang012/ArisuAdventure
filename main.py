@@ -6,8 +6,9 @@ if __name__ == '__main__':
 
     while gameManager.isRunning:
         gameManager.run()
+
+        pygame.display.update()
         gameManager.clock.tick(gameManager.FPS)
-        pygame.display.flip()
 
     pygame.quit()
     sys.exit()
