@@ -14,6 +14,7 @@ class Cloud:
         # THE DEPTH MAKES THE CLOUD MOVE SLOWER THAN THE CAMERA SCROLL
         render_pos = (self.pos[0] - offset[0] * self.depth,
                       self.pos[1] - offset[1] * self.depth)
+        # MAKE THE CLOUD SCROLL IN A LOOP
         surf.blit(self.img, (render_pos[0] % (surf.get_width() + self.img.get_width()) - self.img.get_width(),
                              render_pos[1] % (surf.get_height() + self.img.get_height()) - self.img.get_height()))
 

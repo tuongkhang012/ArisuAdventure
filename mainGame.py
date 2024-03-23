@@ -1,5 +1,5 @@
 import pygame
-from script.entity import PhysicsEntity
+from script.entity import Player
 from script.tilemap import Tilemap
 from script.clouds import Clouds
 
@@ -14,7 +14,7 @@ class MainGame:
 
         self.clouds = Clouds(self.gameManager.assets["clouds"], count=16)
 
-        self.player = PhysicsEntity(self.gameManager, "player", (100, 50), (30, 42))
+        self.player = Player(self.gameManager, (100, 50), (30, 42))
 
         self.tilemap = Tilemap(self.gameManager)
 
@@ -47,7 +47,8 @@ class MainGame:
                 if event.key == pygame.K_RIGHT:
                     self.movement[1] = True
                 if event.key == pygame.K_x:
-                    self.player.velocity[1] = -3
+                    self.player.set_action("prejump")
+                    self.player.velocity[1] = -5
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
                     self.movement[0] = False
