@@ -1,6 +1,6 @@
 import pygame
 
-from script.utils import load_image, load_images
+from script.utils import load_image, load_images, Animation
 from mainMenu import MainMenu
 from mainGame import MainGame
 
@@ -39,9 +39,24 @@ class GameManager:
 
         self.assets = {
             "overworld": load_images("tilemap/tiles"),
-            "player": load_image("sprite/arisu.png"),
             "background": load_image("tilemap/bg/Layers/1.png"),
             "clouds": load_images("tilemap/clouds"),
+            "bushes": load_images("tilemap/objects/Bushes"),
+            "grass": load_images("tilemap/objects/Grass"),
+            "pointers": load_images("tilemap/objects/Pointers"),
+            "ridges": load_images("tilemap/objects/Ridges"),
+            "stones": load_images("tilemap/objects/Stones"),
+            "trees": load_images("tilemap/objects/Trees"),
+            "willows": load_images("tilemap/objects/Willows"),
+
+            "player/idle": Animation(load_images("sprite/aris/idle"), img_dur=8),
+            "player/run": Animation(load_images("sprite/aris/run"), img_dur=4),
+            "player/prejump": Animation(load_images("sprite/aris/prejump"), img_dur=5),
+            "player/jump": Animation(load_images("sprite/aris/jump"), img_dur=5),
+            "player/dash": Animation(load_images("sprite/aris/dash"), img_dur=5),
+            "player/land": Animation(load_images("sprite/aris/land"), img_dur=5),
+            "player/shooting": Animation(load_images("sprite/aris/shooting"), img_dur=3),
+            "player/fall": Animation(load_images("sprite/aris/fall"), img_dur=5),
         }
 
         self.states = {"main_menu": MainMenu(self), "main_game": MainGame(self)}
