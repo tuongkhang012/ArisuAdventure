@@ -1,4 +1,4 @@
-import pygame
+import pygame, pygame.freetype
 
 from script.utils import load_image, load_images, Animation
 from mainMenu import MainMenu
@@ -19,7 +19,7 @@ class GameManager:
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
-        pygame.font.init()
+        pygame.freetype.init()
 
         self.SCREENWIDTH = 1280
         self.SCREENHEIGHT = 720
@@ -36,9 +36,13 @@ class GameManager:
         self.display = pygame.Surface((self.SCREENWIDTH / 2,
                                        self.SCREENHEIGHT / 2))
         self.clock = pygame.time.Clock()
+        self.cameraSize = pygame.Rect
 
         self.assets = {
-            "overworld": load_images("tilemap/tiles"),
+            "chamber": load_images("tilemap/chamber"),
+            "chamberBG": load_images("tilemap/chamberBG"),
+            "stairs": load_images("tilemap/stairs"),
+            "platform": load_images("tilemap/platform"),
             "background": load_image("tilemap/bg/Layers/1.png"),
             "clouds": load_images("tilemap/clouds"),
             "bushes": load_images("tilemap/objects/Bushes"),
@@ -57,7 +61,10 @@ class GameManager:
             "player/land": Animation(load_images("sprite/aris/land"), img_dur=5),
             "player/shooting": Animation(load_images("sprite/aris/shooting"), img_dur=3),
             "player/fall": Animation(load_images("sprite/aris/fall"), img_dur=5),
+
+            "particle/leaf": Animation(load_images("particles/leaf"), img_dur=20, loop=False),
         }
+        self.fontSmol = pygame.freetype.Font("./asset/font/Pixellari.ttf", 20)
 
         self.states = {"main_menu": MainMenu(self), "main_game": MainGame(self)}
         self.changeState("main_menu")
