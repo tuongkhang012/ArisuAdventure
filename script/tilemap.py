@@ -1,21 +1,46 @@
 import pygame, json
 
+# (-1,0): T (0,-1): L (0,1): R (1,0): B
 AUTOTILE_MAP = {
-    tuple(sorted([(1,0), (0,1)])): 0, #IF HAS NEIGHBOR TO THE RIGHT AND BOTTOM, USE VARIANT=0 TILE
-    tuple(sorted([(1,0), (0,1), (-1, 0)])): 1, #IF HAS NEIGHBOR TO THE RIGHT, BOTTOM AND LEFT, USE VARIANT=1 TILE
-    tuple(sorted([(-1,0), (0,1)])): 2, #LEFT, BOTTOM
-    tuple(sorted([(-1,0), (0,-1), (0,1)])): 3, #LEFT, TOP, BOTTOM
-    tuple(sorted([(-1,0), (0,-1)])): 4, #LEFT, TOP
-    tuple(sorted([(-1,0), (0,-1), (1,0)])): 5, #LEFT, TOP, RIGHT
-    tuple(sorted([(1,0), (0,-1)])): 6, #RIGHT, TOP
-    tuple(sorted([(1,0), (0,-1), (0,1)])): 7, #RIGHT, TOP, BOTTOM
-    tuple(sorted([(1,0), (-1,0), (0,1), (0,-1)])): 8, #LEFT, RIGHT, TOP, BOTTOM
+    #R, B
+    tuple(sorted([(0,1),(1,0)])): 0,
+    #L, R, B
+    tuple(sorted([(0,-1),(0,1),(1,0)])): 1,
+    #L, B
+    tuple(sorted([(0,-1),(1,0)])): 2,
+    #T, R, B
+    tuple(sorted([(-1,0),(0,1),(1,0)])): 3,
+    #L, R, T, B
+    tuple(sorted([(0,-1),(0,1),(-1,0),(1,0)])): 4,
+    #T, L, B
+    tuple(sorted([(-1,0),(0,-1),(1,0)])): 5,
+    #T, R
+    tuple(sorted([(-1,0),(0,1)])): 6,
+    #L, T, R
+    tuple(sorted([(0,-1),(-1,0),(0,1)])): 7,
+    #L, T
+    tuple(sorted([(0,-1),(-1,0)])): 8,
+    #R
+    tuple(sorted([(0,1)])): 9,
+    #L, R
+    tuple(sorted([(0,-1),(0,1)])): 10,
+    #L
+    tuple(sorted([(0,-1)])): 11,
+    #B
+    tuple(sorted([(1,0)])): 12,
+    #T, B
+    tuple(sorted([(-1,0),(1,0)])): 13,
+    #T
+    tuple(sorted([(-1,0)])): 14,
+    #None
+    tuple(sorted([])): 15
+
 }
 
 NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
 NEIGHBOR_OFFSETS_PLAYER = [(-1, -1), (0, -1), (1, -1), (-1, 0), (0, 0), (1, 0), (-1, 1), (0, 1), (1, 1), (-1, 2), (0, 2), (1, 2)]
-AUTOTILE_TYPES = {'overworld'}
-PHYSICS_TILES = {'overworld'}
+AUTOTILE_TYPES = {'chamber'}
+PHYSICS_TILES = {'chamber','stairs'}
 
 class Tilemap:
     def __init__(self, gameManager, tile_size=32):
@@ -23,6 +48,27 @@ class Tilemap:
         self.tile_size = tile_size
         self.tilemap = {}
         self.offgrid_tiles = []
+
+    # BINDING OBJECT WITH PARTICLES
+    def extract(self, id_pairs, keep=False):
+        matches = []
+        for tile in self.offgrid_tiles.copy():
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(tile)
+                if not keep:
+                    self.offgrid_tiles.remove(tile)
+
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(tile.copy())
+                matches[-1]['pos'] = matches[-1]['pos'].copy()
+                matches[-1]['pos'][0] *= self.tile_size
+                matches[-1]['pos'][1] *= self.tile_size
+                if not keep:
+                    del self.tilemap[loc]
+
+        return matches
 
     # Check for colliding tiles around a position
     def tiles_around(self, pos, player=False):
@@ -46,9 +92,9 @@ class Tilemap:
         rects = []
         for tile in self.tiles_around(pos, player):
             if tile['type'] in PHYSICS_TILES:
-                rects.append(pygame.Rect(tile['pos'][0] * self.tile_size,
+                rects.append((pygame.Rect(tile['pos'][0] * self.tile_size,
                                          tile['pos'][1] * self.tile_size,
-                                         self.tile_size, self.tile_size))
+                                         self.tile_size, self.tile_size), tile['behaviour']))
         return rects
 
     def load(self, path):
@@ -64,7 +110,7 @@ class Tilemap:
         for loc in self.tilemap:
             tile = self.tilemap[loc]
             neighbors = set()
-            for shift in [(1,0), (-1,0), (0,-1), (0,1)]:
+            for shift in [(-1,-1), (-1,1), (1,-1), (1,1), (1,0), (-1,0), (0,-1), (0,1)]:
                 check_loc = str(tile['pos'][0] + shift[0]) + ";" + str(tile['pos'][1] + shift[1])
                 if check_loc in self.tilemap:
                     if self.tilemap[check_loc]['type'] == tile['type']:

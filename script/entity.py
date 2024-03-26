@@ -27,32 +27,62 @@ class PhysicsEntity:
 
         entity_rect = self.rect()
         for rect in tilemap.physics_rects_around(self.pos, True):
+            rect, behaviour = rect
             if entity_rect.colliderect(rect):
-                #pygame.draw.rect(self.gameManager.display, (0, 0, 255), rect)
-                if frame_movement[0] > 0: # MOVING RIGHT
-                    # MOVE ENTITY BACK TO THE LEFT OF THE TILE
-                    entity_rect.right = rect.left
-                    self.collisions['right'] = True
-                if frame_movement[0] < 0: # MOVING LEFT
-                    # MOVE ENTITY BACK TO THE RIGHT OF THE TILE
-                    entity_rect.left = rect.right
-                    self.collisions['left'] = True
-                # UPDATE ENTITY POSITION
-                self.pos[0] = entity_rect.x
+                if behaviour == "normal":
+                    #pygame.draw.rect(self.gameManager.display, (0, 0, 255), rect)
+                    if frame_movement[0] > 0: # MOVING RIGHT
+                        # MOVE ENTITY BACK TO THE LEFT OF THE TILE
+                        entity_rect.right = rect.left
+                        self.collisions['right'] = True
+                    if frame_movement[0] < 0: # MOVING LEFT
+                        # MOVE ENTITY BACK TO THE RIGHT OF THE TILE
+                        entity_rect.left = rect.right
+                        self.collisions['left'] = True
+                    # UPDATE ENTITY POSITION
+                    self.pos[0] = entity_rect.x
 
         self.pos[1] += frame_movement[1]
 
         entity_rect = self.rect()
         for rect in tilemap.physics_rects_around(self.pos, True):
+            rect, behaviour = rect
             if entity_rect.colliderect(rect):
-                #pygame.draw.rect(self.gameManager.display, (0, 255, 0), rect)
-                if frame_movement[1] > 0: # MOVING DOWN
-                    entity_rect.bottom = rect.top
-                    self.collisions['down'] = True
-                if frame_movement[1] < 0: # MOVING UP
-                    entity_rect.top = rect.bottom
-                    self.collisions['up'] = True
-                self.pos[1] = entity_rect.y
+                if behaviour == "normal":
+                    #pygame.draw.rect(self.gameManager.display, (0, 255, 0), rect)
+                    if frame_movement[1] > 0: # MOVING DOWN
+                        entity_rect.bottom = rect.top
+                        self.collisions['down'] = True
+                    if frame_movement[1] < 0: # MOVING UP
+                        entity_rect.top = rect.bottom
+                        self.collisions['up'] = True
+                    self.pos[1] = entity_rect.y
+
+        entity_rect = self.rect()
+        for rect in tilemap.physics_rects_around(self.pos, True):
+            rect, behaviour = rect
+            if entity_rect.colliderect(rect):
+                if behaviour in ["ramps_r", "ramps_l"]:
+                    #GET PLAYER POS RELATIVE TO RAMP
+                    rel_x = entity_rect.x - rect.x
+
+                    if behaviour == "ramps_l":
+                        #GET Y VALUE OF RAMP AT RELATIVE X
+                        pos_height = rel_x + entity_rect.width
+                    else:
+                        pos_height = tilemap.tile_size - rel_x
+
+                    pos_height = min(pos_height, tilemap.tile_size)
+                    pos_height = max(pos_height, 0)
+
+                    target_y = rect.y + tilemap.tile_size - pos_height
+
+                    if entity_rect.bottom > target_y:
+                        entity_rect.bottom = target_y
+                        self.pos[1] = entity_rect.y
+
+                        self.collisions['down'] = True
+
 
         if movement[0] > 0:
             self.flip = False

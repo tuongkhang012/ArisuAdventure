@@ -12,6 +12,11 @@ def load_images(path):
         images.append(load_image(path + '/' + img_name))
     return images
 
+def print_text(surface, text, pos, font, alpha=255, color=(0, 0, 0)):
+    temp_surf, rect = font.render(text, color)
+    temp_surf.set_alpha(alpha)
+    surface.blit(temp_surf, list(pos))
+
 class Animation:
     def __init__(self, images, img_dur=5, loop=True):
         self.images = images
