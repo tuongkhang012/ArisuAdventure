@@ -1,37 +1,40 @@
 import pygame, json
 
-# (-1,0): T (0,-1): L (0,1): R (1,0): B
+# (0,-1): T
+# (-1,0): L
+# (1,0): R
+# (0,1): B
 AUTOTILE_MAP = {
     #R, B
     tuple(sorted([(0,1),(1,0)])): 0,
     #L, R, B
-    tuple(sorted([(0,-1),(0,1),(1,0)])): 1,
+    tuple(sorted([(-1,0),(1,0),(0,1)])): 1,
     #L, B
-    tuple(sorted([(0,-1),(1,0)])): 2,
+    tuple(sorted([(-1,0),(0,1)])): 2,
     #T, R, B
-    tuple(sorted([(-1,0),(0,1),(1,0)])): 3,
+    tuple(sorted([(0,-1),(1,0),(0,1)])): 3,
     #L, R, T, B
-    tuple(sorted([(0,-1),(0,1),(-1,0),(1,0)])): 4,
+    tuple(sorted([(-1,0),(1,0),(0,-1),(0,1)])): 4,
     #T, L, B
-    tuple(sorted([(-1,0),(0,-1),(1,0)])): 5,
+    tuple(sorted([(0,-1),(-1,0),(0,1)])): 5,
     #T, R
-    tuple(sorted([(-1,0),(0,1)])): 6,
+    tuple(sorted([(0,-1),(1,0)])): 6,
     #L, T, R
-    tuple(sorted([(0,-1),(-1,0),(0,1)])): 7,
+    tuple(sorted([(-1,0),(0,-1),(1,0)])): 7,
     #L, T
-    tuple(sorted([(0,-1),(-1,0)])): 8,
+    tuple(sorted([(-1,0),(0,-1)])): 8,
     #R
-    tuple(sorted([(0,1)])): 9,
+    tuple(sorted([(1,0)])): 9,
     #L, R
-    tuple(sorted([(0,-1),(0,1)])): 10,
+    tuple(sorted([(-1,0),(1,0)])): 10,
     #L
-    tuple(sorted([(0,-1)])): 11,
+    tuple(sorted([(-1,0)])): 11,
     #B
-    tuple(sorted([(1,0)])): 12,
+    tuple(sorted([(0,1)])): 12,
     #T, B
-    tuple(sorted([(-1,0),(1,0)])): 13,
+    tuple(sorted([(0,-1),(0,1)])): 13,
     #T
-    tuple(sorted([(-1,0)])): 14,
+    tuple(sorted([(0,-1)])): 14,
     #None
     tuple(sorted([])): 15
 
@@ -110,7 +113,7 @@ class Tilemap:
         for loc in self.tilemap:
             tile = self.tilemap[loc]
             neighbors = set()
-            for shift in [(-1,-1), (-1,1), (1,-1), (1,1), (1,0), (-1,0), (0,-1), (0,1)]:
+            for shift in [(1,0), (-1,0), (0,-1), (0,1)]:
                 check_loc = str(tile['pos'][0] + shift[0]) + ";" + str(tile['pos'][1] + shift[1])
                 if check_loc in self.tilemap:
                     if self.tilemap[check_loc]['type'] == tile['type']:

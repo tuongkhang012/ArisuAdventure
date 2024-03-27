@@ -1,4 +1,6 @@
-import pygame, sys
+import pygame
+import sys
+
 from gameManager import GameManager
 
 if __name__ == '__main__':

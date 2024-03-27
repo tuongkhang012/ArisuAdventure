@@ -29,8 +29,10 @@ class Editor:
         self.assets = {
             "chamber": load_images("tilemap/chamber"),
             "chamberBG": load_images("tilemap/chamberBG"),
+
             "stairs": load_images("tilemap/stairs"),
             "platform": load_images("tilemap/platform"),
+
             "clouds": load_images("tilemap/clouds"),
             "bushes": load_images("tilemap/objects/Bushes"),
             "grass": load_images("tilemap/objects/Grass"),
@@ -39,6 +41,7 @@ class Editor:
             "stones": load_images("tilemap/objects/Stones"),
             "trees": load_images("tilemap/objects/Trees"),
             "willows": load_images("tilemap/objects/Willows"),
+            'spawners': load_images('tilemap/spawner')
         }
 
         self.movement = [False, False, False, False]
