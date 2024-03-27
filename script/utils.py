@@ -2,14 +2,15 @@ import pygame, os
 
 BASE_IMG_PATH = 'asset/'
 
-def load_image(path):
+def load_image(path, alpha=255):
     img = pygame.image.load(BASE_IMG_PATH + path).convert_alpha()
+    img.set_alpha(alpha)
     return img
 
-def load_images(path):
+def load_images(path, alpha=255):
     images = []
     for img_name in sorted(os.listdir(BASE_IMG_PATH + path)):
-        images.append(load_image(path + '/' + img_name))
+        images.append(load_image(path + '/' + img_name, alpha))
     return images
 
 def print_text(surface, text, pos, font, alpha=255, color=(0, 0, 0)):

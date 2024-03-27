@@ -52,6 +52,7 @@ class GameManager:
             "stones": load_images("tilemap/objects/Stones"),
             "trees": load_images("tilemap/objects/Trees"),
             "willows": load_images("tilemap/objects/Willows"),
+            "spawners": load_images("tilemap/spawner"),
 
             "player/idle": Animation(load_images("sprite/aris/idle"), img_dur=8),
             "player/run": Animation(load_images("sprite/aris/run"), img_dur=4),
@@ -61,8 +62,19 @@ class GameManager:
             "player/land": Animation(load_images("sprite/aris/land"), img_dur=5),
             "player/shooting": Animation(load_images("sprite/aris/shooting"), img_dur=3),
             "player/fall": Animation(load_images("sprite/aris/fall"), img_dur=5),
+            "player/fallAlt": Animation(load_images("sprite/aris/fallAlt"), img_dur=5),
+            "player/landAlt": Animation(load_images("sprite/aris/landAlt"), img_dur=5),
+
+            "enemy/idle": Animation(load_images("sprite/kei/idle"), img_dur=8),
+            "enemy/run": Animation(load_images("sprite/kei/run"), img_dur=4),
+            "enemy/prejump": Animation(load_images("sprite/kei/prejump"), img_dur=5),
+            "enemy/jump": Animation(load_images("sprite/kei/jump"), img_dur=5),
+            "enemy/land": Animation(load_images("sprite/kei/land"), img_dur=5),
+            "enemy/fall": Animation(load_images("sprite/kei/fall"), img_dur=5),
 
             "particle/leaf": Animation(load_images("particles/leaf"), img_dur=20, loop=False),
+            "particle/particle": Animation(load_images("particles/particle"), img_dur=6, loop=False),
+            "particle/afterimage": Animation(load_images("sprite/aris/dash", 75), img_dur=5, loop=False),
         }
         self.fontSmol = pygame.freetype.Font("./asset/font/Pixellari.ttf", 20)
 

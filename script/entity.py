@@ -1,4 +1,9 @@
 import pygame
+import math
+import random
+
+from script.particle import Particle
+
 
 class PhysicsEntity:
     def __init__(self, gameManager, e_type, pos, size):
@@ -13,6 +18,8 @@ class PhysicsEntity:
         self.anim_offset = (0, -8)
         self.flip = False
         self.set_action("idle")
+
+        self.last_movement = [0, 0]
 
     def rect(self):
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
@@ -89,6 +96,8 @@ class PhysicsEntity:
         if movement[0] < 0:
             self.flip = True
 
+        self.last_movement = movement
+
         self.velocity[1] = min(5, self.velocity[1] + 0.3)
 
         if self.collisions['down'] or self.collisions['up']:
@@ -100,33 +109,8 @@ class PhysicsEntity:
         #TAKE EACH FRAME FROM THE ANIMATION AND BLIT IT
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False),
                   (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1]))
-        #surf.blit(self.gameManager.assets["player"], (self.pos[0] - offset[0], self.pos[1] - 8 - offset[1]))
 
     def set_action(self, action):
         if action != self.action:
             self.action = action
             self.animation = self.gameManager.assets[self.type + "/" + self.action].copy()
-
-class Player(PhysicsEntity):
-    def __init__(self, gameManager, pos, size):
-        super().__init__(gameManager, "player", pos, size)
-        self.air_time = 0
-
-    def update(self, tilemap, movement=(0, 0)):
-        super().update(tilemap, movement)
-
-        self.air_time += 1
-        if self.collisions['down']:
-            if self.air_time > 4:
-                self.set_action("land")
-            self.air_time = 0
-
-        if self.velocity[1] < 0:
-            self.set_action("jump")
-
-        if self.velocity[1] > 0 and self.air_time > 4:
-            self.set_action("fall")
-        elif movement[0] != 0:
-            self.set_action("run")
-        else:
-            self.set_action("idle")
