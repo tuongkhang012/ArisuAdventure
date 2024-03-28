@@ -79,6 +79,9 @@ class Editor:
             print_text(self.display, "SPAWNPOINT", (5 - render_scroll[0], -15 - render_scroll[1]), self.fontSmol, 200)
             pygame.draw.rect(self.display, (0, 0, 255), (0 - render_scroll[0], 0 - render_scroll[1], 32, 64), 2)
 
+            print_text(self.display, "DEATH LINE", (0 - render_scroll[0], 32*30 - 20 - render_scroll[1]), self.fontSmol, 200)
+            pygame.draw.line(self.display, (255, 0, 0), (-500 - render_scroll[0], 32*30 - render_scroll[1]),
+                             (500 - render_scroll[0], 32*30 - render_scroll[1]), 1)
 
             current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
             current_tile_img.set_alpha(100)

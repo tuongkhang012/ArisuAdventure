@@ -30,8 +30,6 @@ class PhysicsEntity:
 
         self.pos[0] += frame_movement[0]
 
-        #pygame.draw.rect(self.gameManager.display, (255, 0, 0), pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1]))
-
         entity_rect = self.rect()
         for rect in tilemap.physics_rects_around(self.pos, True):
             rect, behaviour = rect
