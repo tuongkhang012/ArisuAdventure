@@ -5,45 +5,47 @@ import pygame, json
 # (1,0): R
 # (0,1): B
 AUTOTILE_MAP = {
-    #R, B
-    tuple(sorted([(0,1),(1,0)])): 0,
-    #L, R, B
-    tuple(sorted([(-1,0),(1,0),(0,1)])): 1,
-    #L, B
-    tuple(sorted([(-1,0),(0,1)])): 2,
-    #T, R, B
-    tuple(sorted([(0,-1),(1,0),(0,1)])): 3,
-    #L, R, T, B
-    tuple(sorted([(-1,0),(1,0),(0,-1),(0,1)])): 4,
-    #T, L, B
-    tuple(sorted([(0,-1),(-1,0),(0,1)])): 5,
-    #T, R
-    tuple(sorted([(0,-1),(1,0)])): 6,
-    #L, T, R
-    tuple(sorted([(-1,0),(0,-1),(1,0)])): 7,
-    #L, T
-    tuple(sorted([(-1,0),(0,-1)])): 8,
-    #R
-    tuple(sorted([(1,0)])): 9,
-    #L, R
-    tuple(sorted([(-1,0),(1,0)])): 10,
-    #L
-    tuple(sorted([(-1,0)])): 11,
-    #B
-    tuple(sorted([(0,1)])): 12,
-    #T, B
-    tuple(sorted([(0,-1),(0,1)])): 13,
-    #T
-    tuple(sorted([(0,-1)])): 14,
-    #None
+    # R, B
+    tuple(sorted([(0, 1), (1, 0)])): 0,
+    # L, R, B
+    tuple(sorted([(-1, 0), (1, 0), (0, 1)])): 1,
+    # L, B
+    tuple(sorted([(-1, 0), (0, 1)])): 2,
+    # T, R, B
+    tuple(sorted([(0, -1), (1, 0), (0, 1)])): 3,
+    # L, R, T, B
+    tuple(sorted([(-1, 0), (1, 0), (0, -1), (0, 1)])): 4,
+    # T, L, B
+    tuple(sorted([(0, -1), (-1, 0), (0, 1)])): 5,
+    # T, R
+    tuple(sorted([(0, -1), (1, 0)])): 6,
+    # L, T, R
+    tuple(sorted([(-1, 0), (0, -1), (1, 0)])): 7,
+    # L, T
+    tuple(sorted([(-1, 0), (0, -1)])): 8,
+    # R
+    tuple(sorted([(1, 0)])): 9,
+    # L, R
+    tuple(sorted([(-1, 0), (1, 0)])): 10,
+    # L
+    tuple(sorted([(-1, 0)])): 11,
+    # B
+    tuple(sorted([(0, 1)])): 12,
+    # T, B
+    tuple(sorted([(0, -1), (0, 1)])): 13,
+    # T
+    tuple(sorted([(0, -1)])): 14,
+    # None
     tuple(sorted([])): 15
 
 }
 
 NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
-NEIGHBOR_OFFSETS_PLAYER = [(-1, -1), (0, -1), (1, -1), (-1, 0), (0, 0), (1, 0), (-1, 1), (0, 1), (1, 1), (-1, 2), (0, 2), (1, 2)]
+NEIGHBOR_OFFSETS_PLAYER = [(-1, -1), (0, -1), (1, -1), (-1, 0), (0, 0), (1, 0), (-1, 1), (0, 1), (1, 1), (-1, 2),
+                           (0, 2), (1, 2)]
 AUTOTILE_TYPES = {'chamber'}
-PHYSICS_TILES = {'chamber','stairs'}
+PHYSICS_TILES = {'chamber', 'stairs'}
+
 
 class Tilemap:
     def __init__(self, gameManager, tile_size=32):
@@ -96,8 +98,8 @@ class Tilemap:
         for tile in self.tiles_around(pos, player):
             if tile['type'] in PHYSICS_TILES:
                 rects.append((pygame.Rect(tile['pos'][0] * self.tile_size,
-                                         tile['pos'][1] * self.tile_size,
-                                         self.tile_size, self.tile_size), tile['behaviour']))
+                                          tile['pos'][1] * self.tile_size,
+                                          self.tile_size, self.tile_size), tile['behaviour']))
         return rects
 
     def load(self, path):
@@ -109,11 +111,17 @@ class Tilemap:
         self.tile_size = map_data['tile_size']
         self.offgrid_tiles = map_data['offgrid']
 
+    def solid_check(self, pos):
+        tile_loc = str(int(pos[0] // self.tile_size)) + ";" + str(int(pos[1] // self.tile_size))
+        if tile_loc in self.tilemap:
+            if self.tilemap[tile_loc]['type'] in PHYSICS_TILES:
+                return self.tilemap[tile_loc]
+
     def autotile(self):
         for loc in self.tilemap:
             tile = self.tilemap[loc]
             neighbors = set()
-            for shift in [(1,0), (-1,0), (0,-1), (0,1)]:
+            for shift in [(1, 0), (-1, 0), (0, -1), (0, 1)]:
                 check_loc = str(tile['pos'][0] + shift[0]) + ";" + str(tile['pos'][1] + shift[1])
                 if check_loc in self.tilemap:
                     if self.tilemap[check_loc]['type'] == tile['type']:

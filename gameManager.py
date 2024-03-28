@@ -13,8 +13,11 @@ class GameManager:
         self.currentState.run()
 
     def changeState(self, newState):
-        self.currentState = self.states[newState]
-        self.currentState.gameManager = self
+        del self.currentState
+        if newState == "main_game":
+            self.currentState = MainGame(self)
+        elif newState == "main_menu":
+            self.currentState = MainMenu(self)
 
     def __init__(self):
         pygame.init()
@@ -62,8 +65,14 @@ class GameManager:
             "player/land": Animation(load_images("sprite/aris/land"), img_dur=5),
             "player/shooting": Animation(load_images("sprite/aris/shooting"), img_dur=3),
             "player/fall": Animation(load_images("sprite/aris/fall"), img_dur=5),
+            "player/wallslide": Animation(load_images("sprite/aris/wallslide"), img_dur=5),
             "player/fallAlt": Animation(load_images("sprite/aris/fallAlt"), img_dur=5),
             "player/landAlt": Animation(load_images("sprite/aris/landAlt"), img_dur=5),
+            "player/wallslideAlt": Animation(load_images("sprite/aris/wallslideAlt"), img_dur=5),
+            "player/jumpAlt": Animation(load_images("sprite/aris/jumpAlt"), img_dur=5),
+            "player/prejumpAlt": Animation(load_images("sprite/aris/prejumpAlt"), img_dur=5),
+            "player/idleAlt": Animation(load_images("sprite/aris/idleAlt"), img_dur=8),
+            "player/runAlt": Animation(load_images("sprite/aris/runAlt"), img_dur=4),
 
             "enemy/idle": Animation(load_images("sprite/kei/idle"), img_dur=8),
             "enemy/run": Animation(load_images("sprite/kei/run"), img_dur=4),
@@ -72,13 +81,18 @@ class GameManager:
             "enemy/land": Animation(load_images("sprite/kei/land"), img_dur=5),
             "enemy/fall": Animation(load_images("sprite/kei/fall"), img_dur=5),
 
+            "gun": load_image("sprite/gun/gun.png"),
+            "shooting": Animation(load_images("sprite/gun/shooting"), img_dur=2, loop=False),
+            "bullet": load_image("sprite/bullet/bullet0.png"),
+
             "particle/leaf": Animation(load_images("particles/leaf"), img_dur=20, loop=False),
             "particle/particle": Animation(load_images("particles/particle"), img_dur=6, loop=False),
             "particle/afterimage": Animation(load_images("sprite/aris/dash", 75), img_dur=5, loop=False),
+            "particle/dead": Animation(load_images("particles/dead"), img_dur=8, loop=False),
         }
         self.fontSmol = pygame.freetype.Font("./asset/font/Pixellari.ttf", 20)
 
-        self.states = {"main_menu": MainMenu(self), "main_game": MainGame(self)}
+        self.currentState = None
         self.changeState("main_menu")
         self.isRunning = True
 
