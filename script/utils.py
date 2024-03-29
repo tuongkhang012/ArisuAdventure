@@ -1,11 +1,14 @@
-import pygame, os
+import pygame
+import os
 
 BASE_IMG_PATH = 'asset/'
+
 
 def load_image(path, alpha=255):
     img = pygame.image.load(BASE_IMG_PATH + path).convert_alpha()
     img.set_alpha(alpha)
     return img
+
 
 def load_images(path, alpha=255):
     images = []
@@ -13,10 +16,12 @@ def load_images(path, alpha=255):
         images.append(load_image(path + '/' + img_name, alpha))
     return images
 
+
 def print_text(surface, text, pos, font, alpha=255, color=(0, 0, 0)):
     temp_surf, rect = font.render(text, color)
     temp_surf.set_alpha(alpha)
     surface.blit(temp_surf, list(pos))
+
 
 class Animation:
     def __init__(self, images, img_dur=5, loop=True):

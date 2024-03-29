@@ -3,8 +3,11 @@ from .entity import *
 
 class Player(PhysicsEntity):
     def __init__(self, gameManager, pos, size, scene):
-        super().__init__(gameManager, "player", pos, size)
-        self.scene = scene
+        super().__init__(gameManager, scene, "player", pos, size)
+        self.max_hp = 20
+        self.hp = self.max_hp
+        self.red_hp = 0
+
         self.air_time = 0
         self.jump_cnt = 1
         self.wall_slide = False
@@ -16,17 +19,34 @@ class Player(PhysicsEntity):
         self.dashing = 0
         self.dash_gnd = False
 
-        #FOR FIRING
+        # FOR FIRING
         self.charge = 0
         self.shooting = False
         self.gun_anim = None
 
-    def update(self, tilemap, movement=(0, 0)):
-        super().update(tilemap, movement)
+        self.is_pushing = False
+
+    def update(self, tilemap):
+        super().update(tilemap)
+
+        entity_rect = self.rect()
+        for rect in tilemap.spikes_rects_around(self.pos, True if self.type in TALL else False):
+            rect, behaviour = rect
+            if entity_rect.colliderect(rect):
+                self.hp = max(0, self.hp - 999)
+                self.death()
 
         # DIE IF FALLING TOO FAR
-        if self.rect().y > 32*30:
+        if self.rect().y > 32 * 30:
             self.scene.dead += 1
+
+        for entity in self.entity_col['right']:
+            if entity.type in HARD_OBJECTS and self.collisions['right']:
+                entity.dx = self.dx
+
+        for entity in self.entity_col['left']:
+            if entity.type in HARD_OBJECTS and self.collisions['left']:
+                entity.dx = self.dx
 
         self.air_time += 1
         if self.collisions['down']:
@@ -73,7 +93,7 @@ class Player(PhysicsEntity):
                     self.set_action("fall")
                 else:
                     self.set_action("fallAlt")
-            elif movement[0] != 0:
+            elif self.dx != 0:
                 if self.dash_cnt:
                     self.set_action("run")
                 else:
@@ -98,11 +118,11 @@ class Player(PhysicsEntity):
         if self.dashing > 10:
             px, py = self.rect().center
             self.scene.particles.append(Particle(self.gameManager, 'afterimage',
-                                                 (px, py-4), p_flip=self.flip))
+                                                 (px, py - 4), p_flip=self.flip))
 
-        if abs(self.dashingX) in range(1,3):
+        if abs(self.dashingX) in range(1, 3):
             self.velocity[0] *= 0.3
-        if abs(self.dashingY) in range(1,3):
+        if abs(self.dashingY) in range(1, 3):
             self.velocity[1] += 0.3
 
         if not self.dashingX:
@@ -117,9 +137,7 @@ class Player(PhysicsEntity):
                 self.velocity[0] = min(self.velocity[0] + 0.5, 0)
 
         if self.gun_anim:
-            print("A")
             self.gun_anim.update()
-        print(self.shooting)
 
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset)
@@ -127,7 +145,8 @@ class Player(PhysicsEntity):
         flip_flag = self.flip ^ self.wall_slide
         if not self.shooting:
             surf.blit(pygame.transform.flip(self.gameManager.assets['gun'], flip_flag, False),
-                      (self.rect().centerx + 6 - 12 * flip_flag - self.gameManager.assets['gun'].get_width() / 2 - offset[0],
+                      (self.rect().centerx + 6 - 12 * flip_flag - self.gameManager.assets['gun'].get_width() / 2 -
+                       offset[0],
                        self.rect().centery + 8 - self.gameManager.assets['gun'].get_height() / 2 - offset[1]))
         else:
             surf.blit(pygame.transform.flip(self.gun_anim.img(), flip_flag, False),
@@ -135,10 +154,17 @@ class Player(PhysicsEntity):
                        offset[0],
                        self.rect().centery + 8 - self.gameManager.assets['gun'].get_height() / 2 - offset[1]))
             if self.gun_anim.done:
-                self.scene.player_projectiles.append(
-                    [[self.rect().centerx + 32 - 40 * flip_flag - self.gameManager.assets['gun'].get_width() / 2,
-                      self.rect().centery + 12 - self.gameManager.assets['gun'].get_height() / 2],
-                     4 - 8 * flip_flag, 0])
+                if self.charge >= 30:
+                    self.scene.player_projectiles.append(
+                        [[self.rect().centerx + 32 - 40 * flip_flag - self.gameManager.assets['gun'].get_width() / 2,
+                          self.rect().centery - self.gameManager.assets['charged_bullet'].get_height()/2 + 12 - self.gameManager.assets['gun'].get_height() / 2],
+                         [4 - 8 * flip_flag, 0], 0, self.gameManager.assets['charged_bullet'], 10])
+                    self.charge = 0
+                else:
+                    self.scene.player_projectiles.append(
+                        [[self.rect().centerx + 32 - 40 * flip_flag - self.gameManager.assets['gun'].get_width() / 2,
+                          self.rect().centery - self.gameManager.assets['ally_bullet'].get_height()/2 + 12 - self.gameManager.assets['gun'].get_height() / 2],
+                         [4 - 8 * flip_flag, 0], 0, self.gameManager.assets['ally_bullet'], 5])
                 self.shooting = False
 
     # THE BOOLEAN RETURN IS USED TO CHECK IF THE PLAYER JUMPED
@@ -196,10 +222,12 @@ class Player(PhysicsEntity):
             self.shooting = True
 
     def reset(self):
+        self.hp = self.max_hp
+        self.red_hp = 0
         self.air_time = 0
         self.jump_cnt = 1
         self.wall_slide = False
-        self.velocity = [0,0]
+        self.velocity = [0, 0]
 
         # FOR DASHING
         self.dash_cnt = 1
@@ -211,3 +239,18 @@ class Player(PhysicsEntity):
         # FOR FIRING
         self.charge = 0
         self.shooting = False
+
+    def death(self):
+        if self.hp <= 0:
+            self.scene.dead += 1
+            self.scene.screenshake = max(16, self.scene.screenshake)
+            for i in range(30):
+                angle = (i / 30) * math.pi * 2
+                self.scene.particles.append(Particle(self.gameManager, "dead", self.rect().center,
+                                                     velocity=[math.cos(angle) * 2,
+                                                               math.sin(angle) * 2],
+                                                     frame=0))
+
+    def gravity(self):
+        if not self.dashing:
+            self.velocity[1] = min(5, self.velocity[1] + 0.3)

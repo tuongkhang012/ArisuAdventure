@@ -44,6 +44,7 @@ class GameManager:
         self.assets = {
             "chamber": load_images("tilemap/chamber"),
             "chamberBG": load_images("tilemap/chamberBG"),
+            "chamberSpike": load_images("tilemap/chamberSpike"),
             "stairs": load_images("tilemap/stairs"),
             "platform": load_images("tilemap/platform"),
             "background": load_image("tilemap/bg/Layers/1.png"),
@@ -56,6 +57,8 @@ class GameManager:
             "trees": load_images("tilemap/objects/Trees"),
             "willows": load_images("tilemap/objects/Willows"),
             "spawners": load_images("tilemap/spawner"),
+
+            "box/idle": Animation(load_images("tilemap/objects/Boxes"), img_dur=1),
 
             "player/idle": Animation(load_images("sprite/aris/idle"), img_dur=8),
             "player/run": Animation(load_images("sprite/aris/run"), img_dur=4),
@@ -74,21 +77,37 @@ class GameManager:
             "player/idleAlt": Animation(load_images("sprite/aris/idleAlt"), img_dur=8),
             "player/runAlt": Animation(load_images("sprite/aris/runAlt"), img_dur=4),
 
-            "enemy/idle": Animation(load_images("sprite/kei/idle"), img_dur=8),
-            "enemy/run": Animation(load_images("sprite/kei/run"), img_dur=4),
-            "enemy/prejump": Animation(load_images("sprite/kei/prejump"), img_dur=5),
-            "enemy/jump": Animation(load_images("sprite/kei/jump"), img_dur=5),
-            "enemy/land": Animation(load_images("sprite/kei/land"), img_dur=5),
-            "enemy/fall": Animation(load_images("sprite/kei/fall"), img_dur=5),
+            "gunner/idle": Animation(load_images("sprite/kei/idle"), img_dur=8),
+            "gunner/run": Animation(load_images("sprite/kei/run"), img_dur=4),
+            "gunner/prejump": Animation(load_images("sprite/kei/prejump"), img_dur=5),
+            "gunner/jump": Animation(load_images("sprite/kei/jump"), img_dur=5),
+            "gunner/land": Animation(load_images("sprite/kei/land"), img_dur=5),
+            "gunner/fall": Animation(load_images("sprite/kei/fall"), img_dur=5),
 
             "gun": load_image("sprite/gun/gun.png"),
             "shooting": Animation(load_images("sprite/gun/shooting"), img_dur=2, loop=False),
-            "bullet": load_image("sprite/bullet/bullet0.png"),
+            "ally_bullet": load_image("sprite/bullet/bullet0.png"),
+            "enemy_bullet": load_image("sprite/bullet/bullet2.png"),
+            "charged_bullet": load_image("sprite/bullet/bullet1.png"),
 
             "particle/leaf": Animation(load_images("particles/leaf"), img_dur=20, loop=False),
             "particle/particle": Animation(load_images("particles/particle"), img_dur=6, loop=False),
             "particle/afterimage": Animation(load_images("sprite/aris/dash", 75), img_dur=5, loop=False),
             "particle/dead": Animation(load_images("particles/dead"), img_dur=8, loop=False),
+
+            "healthSmol/idle": Animation(load_images("items/HealthSmol"), img_dur=1),
+            "healthBig/idle": Animation(load_images("items/HealthBig"), img_dur=1),
+
+            "refresher/idle": Animation(load_images("refresher/idle"), img_dur=8),
+            "refresher/used": Animation(load_images("refresher/used"), img_dur=1),
+        }
+        self.menuAssets = {
+            "bg": load_image("image/titlescreen.png"),
+        }
+        self.fonts = {
+            "title": pygame.freetype.Font("./asset/font/Pixellari.ttf", 40),
+            "smol": pygame.freetype.Font("./asset/font/Pixellari.ttf", 15),
+            "big": pygame.freetype.Font("./asset/font/Pixellari.ttf", 30),
         }
         self.fontSmol = pygame.freetype.Font("./asset/font/Pixellari.ttf", 20)
 
