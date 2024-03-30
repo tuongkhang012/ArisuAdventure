@@ -11,6 +11,7 @@ from script.tilemap import Tilemap
 from script.spark import Spark
 from script.box import Box
 from script.refresher import Refresher
+from script.checkpoint import Checkpoint
 
 
 class MainGame:
@@ -34,7 +35,8 @@ class MainGame:
         self.hpbar_length = 100
         self.hp_ratio = self.player.max_hp / self.hpbar_length
 
-        self.level = 0
+        self.level = self.gameManager.data["level"]
+        self.player.id = self.gameManager.data["id"]
         self.load_level(self.level)
 
     def load_level(self, map_id):
@@ -47,10 +49,22 @@ class MainGame:
         self.enemies = []
         self.objects = []
         self.refreshers = []
+
+        self.checkpoints = []
+        id = 1
+        for checkpoint in self.tilemap.extract([('checkpoint', 0)]):
+            self.checkpoints.append(Checkpoint(self.gameManager, checkpoint['pos'], (32, 32), self, id))
+            id += 1
+
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3)]):
             if spawner['variant'] == 0:
-                print("Player spawned")
-                self.player.pos = spawner['pos']
+                if self.player.id == 0:
+                    self.player.pos = spawner['pos']
+                else:
+                    for checkpoint in self.checkpoints:
+                        if checkpoint.id == self.player.id:
+                            self.player.pos[0] = checkpoint.pos[0]
+                            self.player.pos[1] = checkpoint.pos[1]
             elif spawner['variant'] == 1:
                 self.enemies.append(Gunner(self.gameManager, spawner['pos'], (30, 42), self))
             elif spawner['variant'] == 2:
@@ -83,6 +97,7 @@ class MainGame:
                 self.transition += 1
                 if self.transition > 30:
                     self.level = min(self.level + 1, len(os.listdir('levels')) - 1)
+                    self.player.id = 0
                     self.load_level(self.level)
             if self.transition < 0:
                 self.transition += 1
@@ -118,6 +133,11 @@ class MainGame:
 
             self.tilemap.render(self.display, offset=render_scroll)
 
+            # SPAWNING CHECKPOINTS
+            for checkpoint in self.checkpoints.copy():
+                checkpoint.update(self.tilemap)
+                checkpoint.render(self.display, offset=render_scroll)
+
             # SPAWNING ENEMIES
             for enemy in self.enemies.copy():
                 enemy.update(self.tilemap)
@@ -149,12 +169,8 @@ class MainGame:
 
             # DRAWING THE PLAYER UNTIL DEATH
             if not self.dead:
-                if self.player.is_pushing:
-                    self.player.dx = (self.movement[1] - self.movement[0]) * 1
-                    self.player.update(self.tilemap)
-                else:
-                    self.player.dx = (self.movement[1] - self.movement[0]) * 3
-                    self.player.update(self.tilemap)
+                self.player.dx = (self.movement[1] - self.movement[0]) * 3
+                self.player.update(self.tilemap)
                 self.player.render(self.display, offset=render_scroll)
 
             # [(x,y), direction, timer, img, dmg] SPAWNING BULLETS
@@ -242,6 +258,8 @@ class MainGame:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.gameManager.data["level"] = self.level
+                self.gameManager.data["id"] = self.player.id
                 self.gameManager.isRunning = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.gameManager.changeState("main_menu")
