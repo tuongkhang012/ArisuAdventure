@@ -24,7 +24,7 @@ class Player(PhysicsEntity):
         self.shooting = False
         self.gun_anim = None
 
-        self.is_pushing = False
+        self.id = 0
 
     def update(self, tilemap):
         super().update(tilemap)
@@ -57,10 +57,6 @@ class Player(PhysicsEntity):
                     self.set_action("landAlt")
             self.air_time = 0
             self.jump_cnt = 1
-            self.dashingY = 0
-            if not self.dash_gnd:
-                self.dashingX = 0
-                self.dashing = 0
             self.dash_cnt = 1
 
         if self.collisions['up'] or self.collisions['right'] or self.collisions['left']:
@@ -104,37 +100,18 @@ class Player(PhysicsEntity):
                 else:
                     self.set_action("idleAlt")
 
-        if self.dashingX > 0:
-            self.dashingX = max(0, self.dashingX - 1)
-        if self.dashingX < 0:
-            self.dashingX = min(0, self.dashingX + 1)
-        if self.dashingY > 0:
-            self.dashingY = max(0, self.dashingY - 1)
-        if self.dashingY < 0:
-            self.dashingY = min(0, self.dashingY + 1)
         if self.dashing > 0:
             self.dashing = max(0, self.dashing - 1)
 
-        if self.dashing > 10:
+        if self.dashing:
             px, py = self.rect().center
             self.scene.particles.append(Particle(self.gameManager, 'afterimage',
                                                  (px, py - 4), p_flip=self.flip))
 
-        if abs(self.dashingX) in range(1, 3):
-            self.velocity[0] *= 0.3
-        if abs(self.dashingY) in range(1, 3):
-            self.velocity[1] += 0.3
-
-        if not self.dashingX:
-            if self.velocity[0] > 0:
-                self.velocity[0] = max(self.velocity[0] - 0.3, 0)
-            else:
-                self.velocity[0] = min(self.velocity[0] + 0.3, 0)
+        if self.velocity[0] > 0:
+            self.velocity[0] = max(self.velocity[0] - 0.3, 0)
         else:
-            if self.velocity[0] > 0:
-                self.velocity[0] = max(self.velocity[0] - 0.5, 0)
-            else:
-                self.velocity[0] = min(self.velocity[0] + 0.5, 0)
+            self.velocity[0] = min(self.velocity[0] + 0.3, 0)
 
         if self.gun_anim:
             self.gun_anim.update()
@@ -200,20 +177,15 @@ class Player(PhysicsEntity):
         if self.dash_cnt:
             self.set_action("dash")
             if self.collisions['down']:
-                self.dash_gnd = True
-            if keys[0]:
-                self.dashingY = -30
-                self.velocity[1] = -6
-            if keys[1]:
-                self.dashingY = 30
-                self.velocity[1] = 6
-            if keys[2]:
-                self.dashingX = -30
-                self.velocity[0] = -6
-            if keys[3]:
-                self.dashingX = 30
-                self.velocity[0] = 6
-            self.dashing = 30
+                self.dashing = 4
+            else:
+                self.dashing = 9
+            self.velocity = [0,0]
+            dir = [keys[3] - keys[2], keys[1] - keys[0]]
+            if dir[0] == 0 and dir[1] == 0:
+                dir = [1, 0]
+            dir = list(map(lambda x: x / math.sqrt(dir[0] ** 2 + dir[1] ** 2), dir))
+            self.velocity = list(map(lambda x: x * 5, dir))
             self.dash_cnt = max(0, self.dash_cnt - 1)
 
     def shoot(self):

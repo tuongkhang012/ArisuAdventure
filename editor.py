@@ -42,7 +42,9 @@ class Editor:
             "stones": load_images("tilemap/objects/Stones"),
             "trees": load_images("tilemap/objects/Trees"),
             "willows": load_images("tilemap/objects/Willows"),
-            'spawners': load_images('tilemap/spawner')
+            'spawners': load_images('tilemap/spawner'),
+
+            "checkpoint": load_images("checkpoint/untouched"),
         }
 
         self.movement = [False, False, False, False]

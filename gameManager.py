@@ -29,6 +29,10 @@ class GameManager:
         self.FPS = 30
         self.CAPTION = "Arisu Adventure"
         self.icon = None
+        self.data = {
+            "level": 0,
+            "id": 0,
+        }
 
         pygame.display.set_caption(self.CAPTION)
         # icon = pygame.image.load("artwork/sob.png")
@@ -100,6 +104,12 @@ class GameManager:
 
             "refresher/idle": Animation(load_images("refresher/idle"), img_dur=8),
             "refresher/used": Animation(load_images("refresher/used"), img_dur=1),
+
+            "checkpoint": load_images("checkpoint/untouched"),
+
+            "checkpoint/untouched": Animation(load_images("checkpoint/untouched"), img_dur=1),
+            "checkpoint/burn": Animation(load_images("checkpoint/burn"), img_dur=5, loop=False),
+            "checkpoint/idle": Animation(load_images("checkpoint/idle"), img_dur=5),
         }
         self.menuAssets = {
             "bg": load_image("image/titlescreen.png"),
