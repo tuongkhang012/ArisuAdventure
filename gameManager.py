@@ -53,6 +53,7 @@ class GameManager:
             "platform": load_images("tilemap/platform"),
             "background": load_image("tilemap/bg/Layers/1.png"),
             "clouds": load_images("tilemap/clouds"),
+            "smogs": load_images("tilemap/smogs", 170),
             "bushes": load_images("tilemap/objects/Bushes"),
             "grass": load_images("tilemap/objects/Grass"),
             "pointers": load_images("tilemap/objects/Pointers"),
@@ -115,7 +116,8 @@ class GameManager:
             "neru/idle": Animation(load_images("sprite/neru/idle"), img_dur=8),
         }
         self.menuAssets = {
-            "bg": load_image("image/titlescreen.png"),
+            "menu_bg": load_image("image/titlescreen.png"),
+            "main_bg0": load_image("image/main_bg0.png"),
         }
         self.fonts = {
             "title": pygame.freetype.Font("./asset/font/Pixellari.ttf", 40),

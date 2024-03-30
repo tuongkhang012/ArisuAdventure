@@ -7,9 +7,19 @@ class Neru(PhysicsEntity):
     def __init__(self, gameManager, pos, size, scene):
         super().__init__(gameManager, scene, "neru", pos, size)
 
+        self.max_hp = 100
         self.hp = 100
+        self.active_radius = 32*11
+
+        self.active = False
+        self.invincible = False
 
     def update(self, tilemap):
+        if self.scene.player.rect().colliderect(self.pos[0] - self.active_radius, self.pos[1] - self.active_radius,
+                                                self.active_radius*2, self.active_radius*2):
+            self.scene.boss_encounter = True
+            self.active = True
+
         if self.scene.player.rect().colliderect(self.rect()):
             dis = (self.scene.player.pos[0] - self.pos[0], self.scene.player.pos[1] - self.pos[1])
             self.scene.player.hurting = True
@@ -23,10 +33,20 @@ class Neru(PhysicsEntity):
 
         self.set_action("idle")
 
+        if self.active:
+            # APPEAR
+            # 3 CHOICES
+            # DASH
+            # SHOOT DIAGONALS
+            # RAGE -> SHOOT
+            # DISAPPEAR
+            pass
+
         super().update(tilemap)
 
     def death(self):
         if self.hp <= 0:
+            self.scene.boss_encounter = False
             self.scene.bosses.remove(self)
             self.scene.screenshake = max(16, self.scene.screenshake)
             for i in range(30):
@@ -42,3 +62,7 @@ class Neru(PhysicsEntity):
 
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset)
+
+    def disappear(self):
+        pass
+
