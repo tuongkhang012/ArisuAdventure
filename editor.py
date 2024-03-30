@@ -43,6 +43,7 @@ class Editor:
             "trees": load_images("tilemap/objects/Trees"),
             "willows": load_images("tilemap/objects/Willows"),
             'spawners': load_images('tilemap/spawner'),
+            "onedoorleft": load_images("tilemap/onedoorleft"),
 
             "checkpoint": load_images("checkpoint/untouched"),
         }
