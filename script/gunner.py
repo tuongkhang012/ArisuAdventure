@@ -12,6 +12,22 @@ class Gunner(PhysicsEntity):
         self.walking = 0
 
     def update(self, tilemap):
+        if self.scene.player.rect().collidepoint((self.rect().centerx, self.pos[1] - 2)):
+            self.hp -= 90
+            self.scene.player.velocity[1] = -5
+            self.scene.player.dash_cnt = min(1, self.scene.player.dash_cnt + 1)
+            self.death()
+        elif self.scene.player.rect().colliderect(self.rect()):
+            dis = (self.scene.player.pos[0] - self.pos[0], self.scene.player.pos[1] - self.pos[1])
+            self.scene.player.hurting = True
+            self.scene.player.hp = max(0, self.scene.player.hp - 2)
+            self.scene.player.red_hp = 0
+            self.scene.player.death()
+            if dis[0] < 0:
+                self.scene.player.velocity[0] = -5
+            else:
+                self.scene.player.velocity[0] = 5
+
         if self.walking:
             if tilemap.solid_check((self.rect().centerx + (-29 if self.flip else 29), self.pos[1] + 16 + 42)):
                 if self.collisions['left'] or self.collisions['right']:
@@ -77,7 +93,7 @@ class Gunner(PhysicsEntity):
                                                      frame=random.randint(0, 7)))
             self.scene.sparks.append(Spark(self.rect().center, 0, 5 + random.random()))
             self.scene.sparks.append(Spark(self.rect().center, math.pi, 5 + random.random()))
-            drop = random.choices([0, 1, 2], weights=[0.0, 0.0, 1.0], k=1)[0]
+            drop = random.choices([0, 1, 2], weights=[0.75, 0.1, 0.05], k=1)[0]
             if drop == 1:
                 self.scene.items.append(HealthDrop("healthSmol", self.gameManager, self.rect().center, (6,6), self.scene))
             elif drop == 2:

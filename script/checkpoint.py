@@ -20,13 +20,15 @@ class Checkpoint:
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
 
     def update(self, tilemap):
-        if self.scene.player.rect().colliderect(self.rect()) and self.action == "untouched":
-            self.set_action("burn")
-            self.scene.player.id = self.id
-            for i in range(15):
-                angle = random.random() * - math.pi
-                self.scene.sparks.append(Spark(self.rect().midbottom, angle, 0.5 + random.random(), (233, 250, 0, 0)))
-                self.scene.sparks.append(Spark(self.rect().midbottom, angle, 2 + random.random(), (255, 136, 0)))
+        if self.scene.player.rect().colliderect(self.rect()):
+            if self.action == "untouched":
+                self.set_action("burn")
+                self.scene.player.id = self.id
+                for i in range(15):
+                    angle = random.random() * - math.pi
+                    self.scene.sparks.append(Spark(self.rect().midbottom, angle, 0.5 + random.random(), (233, 250, 0, 0)))
+                    self.scene.sparks.append(Spark(self.rect().midbottom, angle, 2 + random.random(), (255, 136, 0)))
+            self.scene.player.hp = self.scene.player.max_hp
 
         if self.action == "burn" and self.animation.done:
             self.set_action("idle")

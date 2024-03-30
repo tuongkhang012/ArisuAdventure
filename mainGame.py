@@ -12,6 +12,7 @@ from script.spark import Spark
 from script.box import Box
 from script.refresher import Refresher
 from script.checkpoint import Checkpoint
+from script.neru import Neru
 
 
 class MainGame:
@@ -51,12 +52,13 @@ class MainGame:
         self.refreshers = []
 
         self.checkpoints = []
+        self.bosses = []
         id = 1
         for checkpoint in self.tilemap.extract([('checkpoint', 0)]):
             self.checkpoints.append(Checkpoint(self.gameManager, checkpoint['pos'], (32, 32), self, id))
             id += 1
 
-        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3)]):
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3), ('spawners', 4)]):
             if spawner['variant'] == 0:
                 if self.player.id == 0:
                     self.player.pos = spawner['pos']
@@ -71,6 +73,8 @@ class MainGame:
                 self.objects.append(Box(self.gameManager, spawner['pos'], (27, 26), self))
             elif spawner['variant'] == 3:
                 self.refreshers.append(Refresher(self.gameManager, spawner['pos'], (16, 16), self))
+            elif spawner['variant'] == 4:
+                self.bosses.append(Neru(self.gameManager, spawner['pos'], (30, 42), self))
 
         self.projectiles = []
         self.player_projectiles = []
@@ -142,6 +146,11 @@ class MainGame:
             for enemy in self.enemies.copy():
                 enemy.update(self.tilemap)
                 enemy.render(self.display, offset=render_scroll)
+
+            # SPAWNING BOSSES
+            for boss in self.bosses.copy():
+                boss.update(self.tilemap)
+                boss.render(self.display, offset=render_scroll)
 
             # SPAWNING OBJECTS
             for object in self.objects.copy():
@@ -236,6 +245,17 @@ class MainGame:
                             enemy.hp -= projectile[4]
                             enemy.hurting = True
                             enemy.death()
+                            self.player_projectiles.remove(projectile)
+                            break
+                    for boss in self.bosses.copy():
+                        if boss.rect().colliderect((projectile[0][0], projectile[0][1], img.get_width(), img.get_height())):
+                            for i in range(4):
+                                self.sparks.append(Spark((projectile[0][0] + img.get_width()/2, projectile[0][1] + img.get_height()/2),
+                                                         random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
+                                                         2 + random.random(), color=(255, 136, 0)))
+                            boss.hp -= projectile[4]
+                            boss.hurting = True
+                            boss.death()
                             self.player_projectiles.remove(projectile)
                             break
 

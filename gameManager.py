@@ -61,6 +61,7 @@ class GameManager:
             "trees": load_images("tilemap/objects/Trees"),
             "willows": load_images("tilemap/objects/Willows"),
             "spawners": load_images("tilemap/spawner"),
+            "onedoorleft": load_images("tilemap/onedoorleft"),
 
             "box/idle": Animation(load_images("tilemap/objects/Boxes"), img_dur=1),
 
@@ -110,6 +111,8 @@ class GameManager:
             "checkpoint/untouched": Animation(load_images("checkpoint/untouched"), img_dur=1),
             "checkpoint/burn": Animation(load_images("checkpoint/burn"), img_dur=5, loop=False),
             "checkpoint/idle": Animation(load_images("checkpoint/idle"), img_dur=5),
+
+            "neru/idle": Animation(load_images("sprite/neru/idle"), img_dur=8),
         }
         self.menuAssets = {
             "bg": load_image("image/titlescreen.png"),

@@ -4,7 +4,7 @@ import random
 
 from script.particle import Particle
 
-TALL = ["player", "gunner"]
+TALL = ["player", "gunner", "neru"]
 SHORT = ["box"]
 HARD_OBJECTS = ["box"]
 
@@ -59,6 +59,19 @@ class PhysicsEntity:
                         entity_rect.right = rect.left
                         self.collisions['right'] = True
                     if frame_movement[0] < 0: # MOVING LEFT
+                        # MOVE ENTITY BACK TO THE RIGHT OF THE TILE
+                        entity_rect.left = rect.right
+                        self.collisions['left'] = True
+                    # UPDATE ENTITY POSITION
+                    self.pos[0] = entity_rect.x
+
+        entity_rect = self.rect()
+        for rect in tilemap.oneway_rects_around(self.pos, True if self.type in TALL else False):
+            rect, behaviour = rect
+            if entity_rect.colliderect(rect):
+                if behaviour == "normal":
+                    # pygame.draw.rect(self.gameManager.display, (0, 0, 255), rect)
+                    if frame_movement[0] < 0:  # MOVING LEFT
                         # MOVE ENTITY BACK TO THE RIGHT OF THE TILE
                         entity_rect.left = rect.right
                         self.collisions['left'] = True
