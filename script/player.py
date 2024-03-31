@@ -24,10 +24,15 @@ class Player(PhysicsEntity):
         self.shooting = False
         self.gun_anim = None
 
+        self.invincible_frame = 0
+
         self.id = 0
 
     def update(self, tilemap):
         super().update(tilemap)
+
+        if self.invincible_frame:
+            self.invincible_frame = max(0, self.invincible_frame - 1)
 
         entity_rect = self.rect()
         for rect in tilemap.spikes_rects_around(self.pos, True if self.type in TALL else False):
@@ -135,7 +140,7 @@ class Player(PhysicsEntity):
                     self.scene.player_projectiles.append(
                         [[self.rect().centerx + 32 - 40 * flip_flag - self.gameManager.assets['gun'].get_width() / 2,
                           self.rect().centery - self.gameManager.assets['charged_bullet'].get_height()/2 + 12 - self.gameManager.assets['gun'].get_height() / 2],
-                         [4 - 8 * flip_flag, 0], 0, self.gameManager.assets['charged_bullet'], 10])
+                         [4 - 8 * flip_flag, 0], 0, self.gameManager.assets['charged_bullet'], 20])
                     self.charge = 0
                 else:
                     self.scene.player_projectiles.append(
@@ -175,6 +180,7 @@ class Player(PhysicsEntity):
 
     def dash(self, keys):
         if self.dash_cnt:
+            self.scene.screenshake = max(8, self.scene.screenshake)
             self.set_action("dash")
             if self.collisions['down']:
                 self.dashing = 4

@@ -202,12 +202,18 @@ class MainGame:
                 projectile[0][1] += projectile[1][1]
                 projectile[2] += 1
                 img = projectile[3]
+                flip_flag = False
                 if projectile[1][0] < 0:
-                    img = pygame.transform.flip(img, True, False)
+                    flip_flag = True
+                    img = pygame.transform.flip(img, flip_flag, False)
                 self.display.blit(img,
                                   (projectile[0][0] - render_scroll[0],
                                    projectile[0][1] - render_scroll[1]))
-                if self.tilemap.solid_check((projectile[0][0] + img.get_width(), projectile[0][1] + img.get_height())):
+                if flip_flag:
+                    check_ahead = (projectile[0][0] + projectile[1][0], projectile[0][1] + img.get_height()/2 + projectile[1][1])
+                else:
+                    check_ahead = (projectile[0][0] + img.get_width() + projectile[1][0], projectile[0][1] + img.get_height()/2 + projectile[1][1])
+                if self.tilemap.solid_check(check_ahead):
                     self.projectiles.remove(projectile)
                     for i in range(4):
                         self.sparks.append(Spark((projectile[0][0] + img.get_width()/2, projectile[0][1] + img.get_height()/2),
@@ -228,7 +234,6 @@ class MainGame:
                             self.player.red_hp = 0.6*projectile[4]
                         else:
                             self.player.red_hp = 0
-                        self.player.death()
 
             # SPAWNING PLAYER BULLET
             for projectile in self.player_projectiles.copy():
@@ -258,18 +263,16 @@ class MainGame:
                                                          2 + random.random(), color=(255, 136, 0)))
                             enemy.hp -= projectile[4]
                             enemy.hurting = True
-                            enemy.death()
                             self.player_projectiles.remove(projectile)
                             break
                     for boss in self.bosses.copy():
-                        if boss.rect().colliderect((projectile[0][0], projectile[0][1], img.get_width(), img.get_height())):
+                        if boss.rect().colliderect((projectile[0][0], projectile[0][1], img.get_width(), img.get_height())) and not boss.invincible:
                             for i in range(4):
                                 self.sparks.append(Spark((projectile[0][0] + img.get_width()/2, projectile[0][1] + img.get_height()/2),
                                                          random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
                                                          2 + random.random(), color=(255, 136, 0)))
                             boss.hp = max(0, boss.hp - projectile[4])
                             boss.hurting = True
-                            boss.death()
                             self.player_projectiles.remove(projectile)
                             break
 
@@ -340,6 +343,13 @@ class MainGame:
                 if event.key == pygame.K_c and not self.paused:
                     self.player.shoot()
 
+        for enemy in self.enemies.copy():
+            enemy.death()
+        for boss in self.bosses.copy():
+            boss.death()
+        if not self.dead:
+            self.player.death()
+
     def advanced_hpbar(self):
         self.player.hp = min(self.player.hp + self.player.red_hp / 360, self.player.hp + self.player.red_hp)
         self.player.red_hp = max(0.0, self.player.red_hp - self.player.red_hp / 360)
@@ -355,9 +365,11 @@ class MainGame:
         pygame.draw.rect(self.display, (0, 0, 0), (10, 10, self.hpbar_length, 10), 1) # THE BORDER
 
     def boss_hpbar(self):
+        text_surf, text_rect = self.gameManager.fonts['boss'].render(self.bosses[0].name, (255, 255, 255))
         hpbar_width = int(self.bosses[0].hp / self.bosses[0].max_hp * self.boss_hp_length)
         hpbar = pygame.Rect(20, 330, hpbar_width, 10)
 
+        self.display.blit(text_surf, (20, 310))
         pygame.draw.rect(self.display, (50, 50, 50), (20, 330, self.boss_hp_length, 10)) # THE BACKGROUND
         pygame.draw.rect(self.display, (255, 41, 41), hpbar) # THE CURRENT HP
         pygame.draw.rect(self.display, (0, 0, 0), (20, 330, self.boss_hp_length, 10), 1) # THE BORDER

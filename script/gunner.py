@@ -16,13 +16,13 @@ class Gunner(PhysicsEntity):
             self.hp -= 90
             self.scene.player.velocity[1] = -5
             self.scene.player.dash_cnt = min(1, self.scene.player.dash_cnt + 1)
-            self.death()
-        elif self.scene.player.rect().colliderect(self.rect()):
+        elif self.scene.player.rect().colliderect(self.rect()) and not self.scene.player.dashing:
             dis = (self.scene.player.pos[0] - self.pos[0], self.scene.player.pos[1] - self.pos[1])
-            self.scene.player.hurting = True
-            self.scene.player.hp = max(0, self.scene.player.hp - 2)
-            self.scene.player.red_hp = 0
-            self.scene.player.death()
+            if not self.scene.player.invincible_frame:
+                self.scene.player.hurting = True
+                self.scene.player.hp = max(0, self.scene.player.hp - 2)
+                self.scene.player.red_hp = 0
+                self.scene.player.invincible_frame = 30
             if dis[0] < 0:
                 self.scene.player.velocity[0] = -5
             else:

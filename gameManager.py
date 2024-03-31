@@ -123,6 +123,7 @@ class GameManager:
             "title": pygame.freetype.Font("./asset/font/Pixellari.ttf", 40),
             "smol": pygame.freetype.Font("./asset/font/Pixellari.ttf", 15),
             "big": pygame.freetype.Font("./asset/font/Pixellari.ttf", 30),
+            "boss": pygame.freetype.Font("./asset/font/AncientModernTales-a7Po.ttf", 20),
         }
         self.fontSmol = pygame.freetype.Font("./asset/font/Pixellari.ttf", 20)
 
