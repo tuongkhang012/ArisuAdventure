@@ -34,6 +34,7 @@ class MainMenu:
             self.greyContinueButton.render(self.screen)
 
         if self.playButton.update():
+            print("NEW GAME")
             self.gameManager.data = {
                 "level": 0,
                 "id": 0,
