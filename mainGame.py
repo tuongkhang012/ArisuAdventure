@@ -26,7 +26,8 @@ class MainGame:
         self.movement = [False, False]
         self.pressing = [False, False, False, False]  # UP, DOWN, LEFT, RIGHT
 
-        self.clouds = Clouds(self.gameManager.assets["clouds"], count=16)
+        self.clouds = Clouds(self.gameManager.assets["clouds"], count=30)
+        self.smogs = Clouds(self.gameManager.assets["smogs"], count=16)
 
         self.player = Player(self.gameManager, (0, 0), (30, 42), self)
 
@@ -35,6 +36,7 @@ class MainGame:
         self.hpchange_speed = 5
         self.hpbar_length = 100
         self.hp_ratio = self.player.max_hp / self.hpbar_length
+        self.boss_hp_length = 600
 
         self.level = self.gameManager.data["level"]
         self.player.id = self.gameManager.data["id"]
@@ -50,6 +52,10 @@ class MainGame:
         self.enemies = []
         self.objects = []
         self.refreshers = []
+        self.victory_timer = 300
+
+        self.boss_encounter = False
+        self.bonfire_timer = 0
 
         self.checkpoints = []
         self.bosses = []
@@ -65,6 +71,7 @@ class MainGame:
                 else:
                     for checkpoint in self.checkpoints:
                         if checkpoint.id == self.player.id:
+                            checkpoint.set_action("idle")
                             self.player.pos[0] = checkpoint.pos[0]
                             self.player.pos[1] = checkpoint.pos[1]
             elif spawner['variant'] == 1:
@@ -91,18 +98,20 @@ class MainGame:
 
     def run(self):
         if not self.paused:
-            self.display.blit(pygame.transform.scale(self.gameManager.assets["background"], self.display.get_size()),
-                              (0, 0))
+            if self.level == 0:
+                self.display.blit(pygame.transform.scale(self.gameManager.menuAssets["main_bg0"], self.display.get_size()), (0, 0))
 
             self.screenshake = max(0, self.screenshake - 1)
 
             # TRANSITION
-            if not len(self.enemies):
-                self.transition += 1
-                if self.transition > 30:
-                    self.level = min(self.level + 1, len(os.listdir('levels')) - 1)
-                    self.player.id = 0
-                    self.load_level(self.level)
+            if not len(self.bosses):
+                self.victory_timer = max(0, self.victory_timer - 1)
+                if not self.victory_timer:
+                    self.transition += 1
+                    if self.transition > 30:
+                        self.level = min(self.level + 1, len(os.listdir('levels')) - 1)
+                        self.player.id = 0
+                        self.load_level(self.level)
             if self.transition < 0:
                 self.transition += 1
 
@@ -132,8 +141,13 @@ class MainGame:
                     self.particles.append(
                         Particle(self.gameManager, "leaf", pos, velocity=[-0.1, 0.3], frame=random.randint(0, 20)))
 
-            self.clouds.update()
-            self.clouds.render(self.display, offset=render_scroll)
+            # SPAWNING CLOUDS
+            if self.level == 1:
+                self.clouds.update()
+                self.clouds.render(self.display, offset=render_scroll)
+            elif self.level == 0:
+                self.smogs.update()
+                self.smogs.render(self.display, offset=render_scroll)
 
             self.tilemap.render(self.display, offset=render_scroll)
 
@@ -253,7 +267,7 @@ class MainGame:
                                 self.sparks.append(Spark((projectile[0][0] + img.get_width()/2, projectile[0][1] + img.get_height()/2),
                                                          random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
                                                          2 + random.random(), color=(255, 136, 0)))
-                            boss.hp -= projectile[4]
+                            boss.hp = max(0, boss.hp - projectile[4])
                             boss.hurting = True
                             boss.death()
                             self.player_projectiles.remove(projectile)
@@ -265,7 +279,16 @@ class MainGame:
                 if kill:
                     self.sparks.remove(spark)
 
+            if not len(self.bosses) and self.victory_timer > 210:
+                self.banner("CORRECTED", (255, 0, 0), self.gameManager.fonts["title"], self.display)
+
+            if self.bonfire_timer:
+                self.banner("CHECKPOINT", (255, 102, 0), self.gameManager.fonts["title"], self.display)
+                self.bonfire_timer = max(0, self.bonfire_timer - 1)
+
             self.advanced_hpbar()
+            if self.boss_encounter:
+                self.boss_hpbar()
 
             if self.transition:
                 transition_surf = pygame.Surface(self.display.get_size())
@@ -331,9 +354,26 @@ class MainGame:
         pygame.draw.rect(self.display, (255, 0, 0), red_hpbar)
         pygame.draw.rect(self.display, (0, 0, 0), (10, 10, self.hpbar_length, 10), 1) # THE BORDER
 
+    def boss_hpbar(self):
+        hpbar_width = int(self.bosses[0].hp / self.bosses[0].max_hp * self.boss_hp_length)
+        hpbar = pygame.Rect(20, 330, hpbar_width, 10)
+
+        pygame.draw.rect(self.display, (50, 50, 50), (20, 330, self.boss_hp_length, 10)) # THE BACKGROUND
+        pygame.draw.rect(self.display, (255, 41, 41), hpbar) # THE CURRENT HP
+        pygame.draw.rect(self.display, (0, 0, 0), (20, 330, self.boss_hp_length, 10), 1) # THE BORDER
+
     def entities_around(self, rect):
         entities = []
         for object in self.objects:
             if object.rect().colliderect(rect):
                 entities.append(object)
         return entities
+
+    def banner(self, text, color, font, display):
+        text_surf, text_rect = font.render(text, color)
+        s = pygame.Surface((display.get_width(), 60))
+        s.set_alpha(190)
+        s.fill((0, 0, 0))
+        display.blit(s, (0, display.get_height()/2 - 30))
+        display.blit(text_surf, (display.get_width()/2 - text_rect.w/2, display.get_height()/2 - text_rect.h/2))
+

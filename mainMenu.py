@@ -25,7 +25,7 @@ class MainMenu:
             self.saveFound = False
 
     def run(self):
-        self.screen.blit(self.gameManager.menuAssets["bg"], (0, 0))
+        self.screen.blit(self.gameManager.menuAssets["menu_bg"], (0, 0))
 
         self.playButton.render(self.screen)
         if self.saveFound:

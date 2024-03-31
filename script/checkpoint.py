@@ -24,11 +24,13 @@ class Checkpoint:
             if self.action == "untouched":
                 self.set_action("burn")
                 self.scene.player.id = self.id
+                self.scene.bonfire_timer = 90
                 for i in range(15):
                     angle = random.random() * - math.pi
                     self.scene.sparks.append(Spark(self.rect().midbottom, angle, 0.5 + random.random(), (233, 250, 0, 0)))
                     self.scene.sparks.append(Spark(self.rect().midbottom, angle, 2 + random.random(), (255, 136, 0)))
             self.scene.player.hp = self.scene.player.max_hp
+            self.scene.player.red_hp = 0
 
         if self.action == "burn" and self.animation.done:
             self.set_action("idle")
