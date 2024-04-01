@@ -134,7 +134,7 @@ class Tilemap:
     def solid_check(self, pos):
         tile_loc = str(int(pos[0] // self.tile_size)) + ";" + str(int(pos[1] // self.tile_size))
         if tile_loc in self.tilemap:
-            if self.tilemap[tile_loc]['type'] in PHYSICS_TILES:
+            if self.tilemap[tile_loc]['type'] in PHYSICS_TILES.union(ONEWAY_TILES):
                 return self.tilemap[tile_loc]
 
     def autotile(self):

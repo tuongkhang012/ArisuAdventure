@@ -13,7 +13,10 @@ from script.box import Box
 from script.refresher import Refresher
 from script.checkpoint import Checkpoint
 from script.neru import Neru
+from script.yuuka import Yuuka
 
+
+OCT_ANGLES = [0, math.pi/4, math.pi/2, 3*math.pi/4, math.pi, 5*math.pi/4, 3*math.pi/2, 7*math.pi/4]
 
 class MainGame:
     def __init__(self, gameManager):
@@ -38,8 +41,10 @@ class MainGame:
         self.hp_ratio = self.player.max_hp / self.hpbar_length
         self.boss_hp_length = 600
 
-        self.level = self.gameManager.data["level"]
-        self.player.id = self.gameManager.data["id"]
+        #self.level = self.gameManager.data["level"]
+        self.level = 1
+        #self.player.id = self.gameManager.data["id"]
+        self.player.id = 4
         self.load_level(self.level)
 
     def load_level(self, map_id):
@@ -64,7 +69,8 @@ class MainGame:
             self.checkpoints.append(Checkpoint(self.gameManager, checkpoint['pos'], (32, 32), self, id))
             id += 1
 
-        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3), ('spawners', 4)]):
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3),
+                                             ('spawners', 4), ('spawners', 5)]):
             if spawner['variant'] == 0:
                 if self.player.id == 0:
                     self.player.pos = spawner['pos']
@@ -82,9 +88,12 @@ class MainGame:
                 self.refreshers.append(Refresher(self.gameManager, spawner['pos'], (16, 16), self))
             elif spawner['variant'] == 4:
                 self.bosses.append(Neru(self.gameManager, spawner['pos'], (30, 42), self))
+            elif spawner['variant'] == 5:
+                self.bosses.append(Yuuka(self.gameManager, spawner['pos'], (80, 116), self))
 
         self.projectiles = []
         self.player_projectiles = []
+        self.special_bullets = []
         self.particles = []
         self.sparks = []
         self.items = []
@@ -100,6 +109,8 @@ class MainGame:
         if not self.paused:
             if self.level == 0:
                 self.display.blit(pygame.transform.scale(self.gameManager.menuAssets["main_bg0"], self.display.get_size()), (0, 0))
+            elif self.level == 1:
+                self.display.blit(pygame.transform.scale(self.gameManager.menuAssets["main_bg1"], self.display.get_size()), (0, 0))
 
             self.screenshake = max(0, self.screenshake - 1)
 
@@ -145,9 +156,6 @@ class MainGame:
             if self.level == 1:
                 self.clouds.update()
                 self.clouds.render(self.display, offset=render_scroll)
-            elif self.level == 0:
-                self.smogs.update()
-                self.smogs.render(self.display, offset=render_scroll)
 
             self.tilemap.render(self.display, offset=render_scroll)
 
@@ -203,9 +211,9 @@ class MainGame:
                 projectile[2] += 1
                 img = projectile[3]
                 flip_flag = False
+                img = pygame.transform.rotate(img, -math.degrees(math.atan2(projectile[1][1], projectile[1][0])))
                 if projectile[1][0] < 0:
                     flip_flag = True
-                    img = pygame.transform.flip(img, flip_flag, False)
                 self.display.blit(img,
                                   (projectile[0][0] - render_scroll[0],
                                    projectile[0][1] - render_scroll[1]))
@@ -223,6 +231,7 @@ class MainGame:
                     self.projectiles.remove(projectile)
                 elif not self.player.dashing:
                     if self.player.rect().colliderect((projectile[0][0], projectile[0][1], img.get_width(), img.get_height())):
+                        print("NORMAL BULLET")
                         for i in range(4):
                             self.sparks.append(Spark((projectile[0][0] + img.get_width()/2, projectile[0][1] + img.get_height()/2),
                                                      random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
@@ -232,6 +241,57 @@ class MainGame:
                         self.player.hp = max(0, self.player.hp - projectile[4])
                         if not self.player.red_hp:
                             self.player.red_hp = 0.6*projectile[4]
+                        else:
+                            self.player.red_hp = 0
+
+            # FOR SPECIAL BULLETS [(x,y), direction, timer, img, dmg, type]
+            for projectile in self.special_bullets.copy():
+                projectile[0][0] += projectile[1][0]
+                projectile[0][1] += projectile[1][1]
+                projectile[2] += 1
+                img = projectile[3]
+                flip_flag = False
+                img = pygame.transform.rotate(img, -math.degrees(math.atan2(projectile[1][1], projectile[1][0])))
+                if projectile[1][0] < 0:
+                    flip_flag = True
+                self.display.blit(img,
+                                  (projectile[0][0] - render_scroll[0],
+                                   projectile[0][1] - render_scroll[1]))
+                if flip_flag:
+                    check_ahead = (
+                    projectile[0][0] + 2*projectile[1][0], projectile[0][1] + img.get_height() / 2 + 2*projectile[1][1])
+                else:
+                    check_ahead = (projectile[0][0] + img.get_width() + 2*projectile[1][0],
+                                   projectile[0][1] + img.get_height() / 2 + 2*projectile[1][1])
+                if self.tilemap.solid_check(check_ahead):
+                    self.special_bullets.remove(projectile)
+                    if projectile[5] == "split":
+                        for angle in OCT_ANGLES:
+                            angle_x = math.sin(angle) * 4
+                            angle_y = math.cos(angle) * 4
+                            self.projectiles.append([[projectile[0][0], projectile[0][1]], [angle_x, angle_y], 0, projectile[3], 4])
+
+                    for i in range(4):
+                        self.sparks.append(
+                            Spark((projectile[0][0] + img.get_width() / 2, projectile[0][1] + img.get_height() / 2),
+                                  random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
+                                  2 + random.random(), color=(255, 136, 0)))
+                elif projectile[2] > 360:
+                    self.special_bullets.remove(projectile)
+                elif not self.player.dashing:
+                    if self.player.rect().colliderect(
+                            (projectile[0][0], projectile[0][1], img.get_width(), img.get_height())):
+                        print("SPECIAL BULLET")
+                        for i in range(4):
+                            self.sparks.append(
+                                Spark((projectile[0][0] + img.get_width() / 2, projectile[0][1] + img.get_height() / 2),
+                                      random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
+                                      2 + random.random(), color=(255, 136, 0)))
+                        self.special_bullets.remove(projectile)
+                        self.player.hurting = True
+                        self.player.hp = max(0, self.player.hp - projectile[4])
+                        if not self.player.red_hp:
+                            self.player.red_hp = 0.6 * projectile[4]
                         else:
                             self.player.red_hp = 0
 
@@ -281,6 +341,10 @@ class MainGame:
                 spark.render(self.display, offset=render_scroll)
                 if kill:
                     self.sparks.remove(spark)
+
+            if self.level == 0:
+                self.smogs.update()
+                self.smogs.render(self.display, offset=render_scroll)
 
             if not len(self.bosses) and self.victory_timer > 210:
                 self.banner("CORRECTED", (255, 0, 0), self.gameManager.fonts["title"], self.display)

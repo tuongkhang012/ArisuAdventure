@@ -4,7 +4,7 @@ from .entity import *
 class Player(PhysicsEntity):
     def __init__(self, gameManager, pos, size, scene):
         super().__init__(gameManager, scene, "player", pos, size)
-        self.max_hp = 20
+        self.max_hp = 50
         self.hp = self.max_hp
         self.red_hp = 0
 
@@ -158,12 +158,12 @@ class Player(PhysicsEntity):
                 self.set_action("prejumpAlt")
             if self.flip and self.last_movement[0] < 0:
                 self.velocity[0] = 5
-                self.velocity[1] = -4
+                self.velocity[1] = -5
                 self.jump_cnt = max(0, self.jump_cnt - 1)
                 return True
             elif not self.flip and self.last_movement[0] > 0:
                 self.velocity[0] = -5
-                self.velocity[1] = -4
+                self.velocity[1] = -5
                 self.jump_cnt = max(0, self.jump_cnt - 1)
                 return True
 
