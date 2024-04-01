@@ -16,6 +16,9 @@ class MainMenu:
         self.greyContinueButton = Button("CONTINUE", (self.gameManager.SCREENWIDTH / 2 - 105, 520), (210, 40), 0, 0,
                                          [200, 200, 200], [0,0,0],
                                          self.gameManager.fonts['title'], border=[0, 0, 0])
+        self.quitButton = Button("QUIT", (self.gameManager.SCREENWIDTH / 2 - 50, 580), (100, 40), 0, 0,
+                                 [255, 210, 159], [100, 0, 35],
+                                 self.gameManager.fonts['title'], [229,64,64], [184, 0, 64], [229,148,57])
 
         try:
             with open('save/data.json', "r") as file:
@@ -32,6 +35,7 @@ class MainMenu:
             self.continueButton.render(self.screen)
         else:
             self.greyContinueButton.render(self.screen)
+        self.quitButton.render(self.screen)
 
         if self.playButton.update():
             print("NEW GAME")

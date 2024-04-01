@@ -1,11 +1,13 @@
+import pygame
+
 from .entity import *
 import random
 
 
 from script.spark import Spark
 
-# 285, 300, 315, 330, 30, 45, 60, 75
-ANGLES = [19*math.pi/12, 5*math.pi/3, 7*math.pi/4, 11*math.pi/6, math.pi/6, math.pi/4, math.pi/3, 5*math.pi/12]
+# 270, 285, 300, 315, 330, 30, 45, 60, 75, 90
+ANGLES = [3*math.pi/2, 19*math.pi/12, 5*math.pi/3, 7*math.pi/4, 11*math.pi/6, math.pi/6, math.pi/4, math.pi/3, 5*math.pi/12, math.pi/2]
 
 class Neru(PhysicsEntity):
     def __init__(self, gameManager, pos, size, scene):
@@ -13,7 +15,7 @@ class Neru(PhysicsEntity):
 
         self.name = "Mikamo Neru"
         self.max_hp = 150
-        self.hp = 150
+        self.hp = 76
         self.active_radius = 10*32
 
         self.topleft = 0
@@ -30,6 +32,7 @@ class Neru(PhysicsEntity):
         self.inAction = False
         self.enrage = False
         self.enrage_attack = False
+        self.render_warning = False
 
         self.waitTimer = 35
         self.volley_wait = 0
@@ -37,6 +40,8 @@ class Neru(PhysicsEntity):
         self.previous_choice = ""
         self.count = 0
         self.warning_wait = 60
+
+        self.set_action("idle")
 
     def update(self, tilemap):
         if self.scene.player.rect().colliderect(self.pos[0] - self.active_radius, self.pos[1] - self.active_radius,
@@ -48,7 +53,7 @@ class Neru(PhysicsEntity):
             dis = (self.scene.player.pos[0] - self.pos[0], self.scene.player.pos[1] - self.pos[1])
             if not self.scene.player.invincible_frame:
                 self.scene.player.hurting = True
-                self.scene.player.hp = max(0, self.scene.player.hp - 2)
+                self.scene.player.hp = max(0, self.scene.player.hp - 5)
                 self.scene.player.red_hp = 0
                 self.scene.player.invincible_frame = 30
             if dis[0] < 0:
@@ -59,20 +64,21 @@ class Neru(PhysicsEntity):
         if self.collisions['down'] and (self.previous_choice == "volley_right" or self.previous_choice == "volley_left"):
             self.dx = 0
 
-        self.set_action("idle")
-
         #print("ACTION TIME: ", self.actionTimer)
         #print("WAIT TIME: ", self.waitTimer)
         if self.enrage_attack:
             self.teleport = False
+            self.hurting = True
             if self.volley_wait:
                 self.volley_wait = max(0, self.volley_wait - 1)
             elif self.warning_wait:
                 self.warning_wait = max(0, self.warning_wait - 1)
+                self.render_warning = True
             else:
                 self.raging()
 
         if self.hp <= self.max_hp / 2 and not self.enrage:
+            self.set_action("idle")
             self.enrage = True
             self.enrage_attack = True
             self.teleport = True
@@ -123,15 +129,17 @@ class Neru(PhysicsEntity):
         if self.hp <= 0:
             self.scene.boss_encounter = False
             self.scene.bosses.remove(self)
-            self.scene.screenshake = max(16, self.scene.screenshake)
+            self.scene.projectiles.clear()
+            self.scene.screenshake = max(32, self.scene.screenshake)
             for i in range(30):
                 angle = random.random() * math.pi * 2
-                speed = random.random() * 5
-                self.scene.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
-                self.scene.particles.append(Particle(self.gameManager, "particle", self.rect().center,
-                                                     velocity=[math.cos(angle + math.pi) * speed * 0.5,
-                                                               math.sin(angle + math.pi) * speed * 0.5],
-                                                     frame=random.randint(0, 7)))
+                self.scene.sparks.append(Spark(self.rect().topright, angle, 5 + random.random(), (255, 242, 0)))
+            for i in range(30):
+                angle = random.random() * math.pi * 2
+                self.scene.sparks.append(Spark(self.rect().midleft, angle, 5 + random.random(), (255, 242, 0)))
+            for i in range(30):
+                angle = random.random() * math.pi * 2
+                self.scene.sparks.append(Spark(self.rect().midbottom, angle, 5 + random.random(), (255, 242, 0)))
             self.scene.sparks.append(Spark(self.rect().center, 0, 5 + random.random()))
             self.scene.sparks.append(Spark(self.rect().center, math.pi, 5 + random.random()))
 
@@ -167,7 +175,9 @@ class Neru(PhysicsEntity):
         if self.EuclideanDistance(self.botright, self.pos) < 3*32:
             self.dx = 0
             self.inAction = False
+            self.set_action("idle")
         else:
+            self.set_action("run")
             if self.enrage:
                 self.dx = 7
             else:
@@ -178,7 +188,9 @@ class Neru(PhysicsEntity):
         if self.EuclideanDistance(self.botleft, self.pos) < 1.5*32:
             self.dx = 0
             self.inAction = False
+            self.set_action("idle")
         else:
+            self.set_action("run")
             if self.enrage:
                 self.dx = -7
             else:
@@ -191,6 +203,8 @@ class Neru(PhysicsEntity):
                 self.dx = 0
                 self.velocity[1] = 0
                 self.volley = True
+                self.flip = True
+                self.set_action("wallslide")
                 self.count = 0
             else:
                 self.dx = -5
@@ -204,8 +218,8 @@ class Neru(PhysicsEntity):
 
             self.scene.projectiles.append(
                 [[self.rect().centerx - 4,
-                  self.rect().centery - self.gameManager.assets['enemy_bullet'].get_height() / 2 + 12],
-                 [nor_dis_x, nor_dis_y], 0, self.gameManager.assets['enemy_bullet'], 2])
+                  self.rect().centery - self.gameManager.assets['smg_bullet'].get_height() / 2 + 12],
+                 [nor_dis_x, nor_dis_y], 0, self.gameManager.assets['smg_bullet'], 3])
             for i in range(4):
                 self.scene.sparks.append(Spark(self.scene.projectiles[-1][0],
                                                random.random() - 0.5 + math.pi, 2 + random.random()))
@@ -219,12 +233,14 @@ class Neru(PhysicsEntity):
                 if self.count == 7:
                     self.inAction = False
                     self.dx = 2
+                    self.set_action("run")
                     self.volley = False
                     self.count = 0
             else:
                 if self.count == 5:
                     self.inAction = False
                     self.dx = 2
+                    self.set_action("run")
                     self.volley = False
                     self.count = 0
 
@@ -234,6 +250,8 @@ class Neru(PhysicsEntity):
             if self.collisions['right']:
                 self.dx = 0
                 self.velocity[1] = 0
+                self.flip = False
+                self.set_action("wallslide")
                 self.volley = True
                 self.count = 0
             else:
@@ -248,8 +266,8 @@ class Neru(PhysicsEntity):
 
             self.scene.projectiles.append(
                 [[self.rect().centerx - 4,
-                  self.rect().centery - self.gameManager.assets['enemy_bullet'].get_height() / 2 + 12],
-                 [nor_dis_x, nor_dis_y], 0, self.gameManager.assets['enemy_bullet'], 2])
+                  self.rect().centery - self.gameManager.assets['smg_bullet'].get_height() / 2 + 12],
+                 [nor_dis_x, nor_dis_y], 0, self.gameManager.assets['smg_bullet'], 3])
             for i in range(4):
                 self.scene.sparks.append(Spark(self.scene.projectiles[-1][0],
                                                random.random() - 0.5 + math.pi, 2 + random.random()))
@@ -264,23 +282,26 @@ class Neru(PhysicsEntity):
                 if self.count == 7:
                     self.inAction = False
                     self.dx = -2
+                    self.set_action("run")
                     self.volley = False
                     self.count = 0
             else:
                 if self.count == 5:
                     self.inAction = False
                     self.dx = -2
+                    self.set_action("run")
                     self.volley = False
                     self.count = 0
 
     def raging(self):
+        self.render_warning = False
         for angle in ANGLES:
             angle_x = math.sin(angle)*5
             angle_y = math.cos(angle)*5
             self.scene.projectiles.append(
                 [[self.rect().centerx - 4,
-                  self.rect().centery - self.gameManager.assets['enemy_bullet'].get_height() / 2 + 12],
-                 [angle_x, angle_y], 0, self.gameManager.assets['enemy_bullet'], 1])
+                  self.rect().centery - self.gameManager.assets['smg_bullet'].get_height() / 2 + 12],
+                 [angle_x, angle_y], 0, self.gameManager.assets['smg_bullet'], 1])
 
         self.volley_wait = 10
 
@@ -289,10 +310,27 @@ class Neru(PhysicsEntity):
             self.inAction = False
             self.volley = False
             self.count = 0
+            self.set_action("idle")
             self.invincible = False
             self.enrage_attack = False
+            self.hurting = False
 
     def render(self, surf, offset=(0, 0)):
+        if self.render_warning:
+            lpoints = [
+                (self.rect().center[0] - offset[0], self.rect().center[1] - offset[1]),
+                (self.rect().centerx - math.sin(math.pi / 3) * 60 - offset[0], self.botleft[1] - offset[1]),
+                (self.botleft[0] - offset[0], self.botleft[1] - offset[1]),
+                (self.topleft[0] - offset[0], self.topleft[1] - offset[1]),
+            ]
+            rpoints = [
+                (self.rect().center[0] - offset[0], self.rect().center[1] - offset[1]),
+                (self.rect().centerx + math.sin(math.pi / 3) * 60 - offset[0], self.botleft[1] - offset[1]),
+                (self.botright[0] - offset[0], self.botright[1] - offset[1]),
+                (self.topright[0] - offset[0], self.topright[1] - offset[1]),
+            ]
+            pygame.draw.polygon(surf, (255, 0, 0, 50), lpoints)
+            pygame.draw.polygon(surf, (255, 0, 0, 50), rpoints)
         if not self.teleport:
             super().render(surf, offset)
 

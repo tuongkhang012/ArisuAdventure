@@ -4,7 +4,7 @@ import random
 
 from script.particle import Particle
 
-TALL = ["player", "gunner", "neru"]
+TALL = ["player", "gunner", "neru", "yuuka"]
 SHORT = ["box"]
 HARD_OBJECTS = ["box"]
 

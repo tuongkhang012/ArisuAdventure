@@ -41,7 +41,7 @@ class GameManager:
         self.screen = pygame.display.set_mode((self.SCREENWIDTH, self.SCREENHEIGHT))
         # FOR SCALING PURPOSES
         self.display = pygame.Surface((self.SCREENWIDTH / 2,
-                                       self.SCREENHEIGHT / 2))
+                                       self.SCREENHEIGHT / 2), pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
         self.cameraSize = pygame.Rect
 
@@ -51,7 +51,6 @@ class GameManager:
             "chamberSpike": load_images("tilemap/chamberSpike"),
             "stairs": load_images("tilemap/stairs"),
             "platform": load_images("tilemap/platform"),
-            "background": load_image("tilemap/bg/Layers/1.png"),
             "clouds": load_images("tilemap/clouds"),
             "smogs": load_images("tilemap/smogs", 170),
             "bushes": load_images("tilemap/objects/Bushes"),
@@ -94,6 +93,7 @@ class GameManager:
             "shooting": Animation(load_images("sprite/gun/shooting"), img_dur=2, loop=False),
             "ally_bullet": load_image("sprite/bullet/bullet0.png"),
             "enemy_bullet": load_image("sprite/bullet/bullet2.png"),
+            "smg_bullet": load_image("sprite/bullet/bullet3.png"),
             "charged_bullet": load_image("sprite/bullet/bullet1.png"),
 
             "particle/leaf": Animation(load_images("particles/leaf"), img_dur=20, loop=False),
@@ -114,10 +114,19 @@ class GameManager:
             "checkpoint/idle": Animation(load_images("checkpoint/idle"), img_dur=5),
 
             "neru/idle": Animation(load_images("sprite/neru/idle"), img_dur=8),
+            "neru/run": Animation(load_images("sprite/neru/run"), img_dur=4),
+            "neru/prejump": Animation(load_images("sprite/neru/prejump"), img_dur=5),
+            "neru/jump": Animation(load_images("sprite/neru/jump"), img_dur=5),
+            "neru/land": Animation(load_images("sprite/neru/land"), img_dur=5),
+            "neru/fall": Animation(load_images("sprite/neru/fall"), img_dur=5),
+            "neru/wallslide": Animation(load_images("sprite/neru/wallslide"), img_dur=5),
+
+            "yuuka/idle": Animation(load_images("sprite/yuuka"), img_dur=8),
         }
         self.menuAssets = {
             "menu_bg": load_image("image/titlescreen.png"),
             "main_bg0": load_image("image/main_bg0.png"),
+            "main_bg1": load_image("image/main_bg1.jpg"),
         }
         self.fonts = {
             "title": pygame.freetype.Font("./asset/font/Pixellari.ttf", 40),
