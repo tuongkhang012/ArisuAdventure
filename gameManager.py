@@ -3,6 +3,8 @@ import pygame, pygame.freetype
 from script.utils import load_image, load_images, Animation
 from mainMenu import MainMenu
 from mainGame import MainGame
+from endScene import EndScene
+from option import Option
 
 # icon = pygame.image.load("artwork/sob.png")
 # pygame.display.set_icon(icon)
@@ -18,6 +20,10 @@ class GameManager:
             self.currentState = MainGame(self)
         elif newState == "main_menu":
             self.currentState = MainMenu(self)
+        elif newState == "ending":
+            self.currentState = EndScene(self)
+        elif newState == "options":
+            self.currentState = Option(self)
 
     def __init__(self):
         pygame.init()
@@ -32,6 +38,7 @@ class GameManager:
         self.data = {
             "level": 0,
             "id": 0,
+            "kei": [],
         }
 
         pygame.display.set_caption(self.CAPTION)
@@ -45,6 +52,13 @@ class GameManager:
         self.clock = pygame.time.Clock()
         self.cameraSize = pygame.Rect
 
+        self.arisChannel = pygame.mixer.Channel(7)
+
+        self.keys = {
+            "fire": pygame.K_c,
+            "jump": pygame.K_x,
+            "dash": pygame.K_z,
+        }
         self.assets = {
             "chamber": load_images("tilemap/chamber"),
             "chamberBG": load_images("tilemap/chamberBG"),
@@ -81,6 +95,12 @@ class GameManager:
             "player/prejumpAlt": Animation(load_images("sprite/aris/prejumpAlt"), img_dur=5),
             "player/idleAlt": Animation(load_images("sprite/aris/idleAlt"), img_dur=8),
             "player/runAlt": Animation(load_images("sprite/aris/runAlt"), img_dur=4),
+            "player/duck": Animation(load_images("sprite/aris/down"), img_dur=5),
+
+            "neru_ded/idle": Animation(load_images("sprite/neru_ded/idle"), img_dur=5),
+
+            "kei": load_image("items/kei/kei.png"),
+            "keiBlack": load_image("items/kei/keiBlack.png"),
 
             "gunner/idle": Animation(load_images("sprite/kei/idle"), img_dur=8),
             "gunner/run": Animation(load_images("sprite/kei/run"), img_dur=4),
@@ -127,12 +147,70 @@ class GameManager:
             "menu_bg": load_image("image/titlescreen.png"),
             "main_bg0": load_image("image/main_bg0.png"),
             "main_bg1": load_image("image/main_bg1.jpg"),
+            "ending": load_image("image/ending.png"),
+            "option": load_image("image/option.png"),
         }
         self.fonts = {
             "title": pygame.freetype.Font("./asset/font/Pixellari.ttf", 40),
             "smol": pygame.freetype.Font("./asset/font/Pixellari.ttf", 15),
             "big": pygame.freetype.Font("./asset/font/Pixellari.ttf", 30),
             "boss": pygame.freetype.Font("./asset/font/AncientModernTales-a7Po.ttf", 20),
+        }
+        self.sounds = {
+            "click": pygame.mixer.Sound("./asset/sounds/click.mp3"),
+            "hit": pygame.mixer.Sound("./asset/sounds/hurt.mp3"),
+            "shoot": pygame.mixer.Sound("./asset/sounds/shot.mp3"),
+            "gunshot": pygame.mixer.Sound("./asset/sounds/gunshot.mp3"),
+            "aris_dmg0": pygame.mixer.Sound("./asset/sounds/aris_dmg0.mp3"),
+            "aris_dmg1": pygame.mixer.Sound("./asset/sounds/aris_dmg1.mp3"),
+            "aris_dmg2": pygame.mixer.Sound("./asset/sounds/aris_dmg2.mp3"),
+            "aris_dmg3": pygame.mixer.Sound("./asset/sounds/aris_dmg3.mp3"),
+            "aris_die": pygame.mixer.Sound("./asset/sounds/aris_die.mp3"),
+            "dash": pygame.mixer.Sound("./asset/sounds/dash.wav"),
+            "checkpoint": pygame.mixer.Sound("./asset/sounds/checkpoint.wav"),
+            "fell": pygame.mixer.Sound("./asset/sounds/fell.wav"),
+            "neru_rage": pygame.mixer.Sound("./asset/sounds/neru_rage.mp3"),
+            "neru_start": pygame.mixer.Sound("./asset/sounds/neru_start.mp3"),
+            "neru_die": pygame.mixer.Sound("./asset/sounds/neru_die.mp3"),
+            "yuuka_rage": pygame.mixer.Sound("./asset/sounds/yuuka_rage.mp3"),
+            "yuuka_start": pygame.mixer.Sound("./asset/sounds/yuuka_start.mp3"),
+            "yuuka_die": pygame.mixer.Sound("./asset/sounds/yuuka_die.mp3"),
+            "jump": pygame.mixer.Sound("./asset/sounds/jump.mp3"),
+            "win": pygame.mixer.Sound("./asset/sounds/panpakapan.wav"),
+            "charged_shot": pygame.mixer.Sound("./asset/sounds/charged_shot.wav"),
+        }
+
+        self.sounds["hit"].set_volume(0.1)
+        self.sounds["shoot"].set_volume(0.1)
+        self.sounds["gunshot"].set_volume(0.05)
+        self.sounds["aris_dmg0"].set_volume(0.1)
+        self.sounds["aris_dmg1"].set_volume(0.1)
+        self.sounds["aris_dmg2"].set_volume(0.1)
+        self.sounds["aris_dmg3"].set_volume(0.1)
+        self.sounds["aris_die"].set_volume(0.1)
+        self.sounds["dash"].set_volume(0.1)
+        self.sounds["checkpoint"].set_volume(0.1)
+        self.sounds["fell"].set_volume(0.05)
+        self.sounds["neru_rage"].set_volume(0.1)
+        self.sounds["neru_start"].set_volume(0.1)
+        self.sounds["neru_die"].set_volume(0.1)
+        self.sounds["yuuka_rage"].set_volume(0.1)
+        self.sounds["yuuka_start"].set_volume(0.1)
+        self.sounds["yuuka_die"].set_volume(0.1)
+        self.sounds["jump"].set_volume(0.05)
+        self.sounds["win"].set_volume(0.1)
+        self.sounds["charged_shot"].set_volume(0.05)
+
+
+        self.musics = {
+            "menu": "./asset/music/Encroached Sky.wav",
+            "option": "./asset/music/Lemonade Diary.wav",
+            "lv0": "./asset/music/Tech N Tech (Hard).wav",
+            "lv1": "./asset/music/Ark in the Blood Sky.wav",
+            "victory": "./asset/music/Party Time.wav",
+            "neru": "./asset/music/Burning Love.wav",
+            "yuuka": "./asset/music/kitsunebi.wav",
+            "ending": "./asset/music/Ending.ogg",
         }
         self.fontSmol = pygame.freetype.Font("./asset/font/Pixellari.ttf", 20)
 

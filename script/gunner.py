@@ -20,6 +20,9 @@ class Gunner(PhysicsEntity):
             dis = (self.scene.player.pos[0] - self.pos[0], self.scene.player.pos[1] - self.pos[1])
             if not self.scene.player.invincible_frame:
                 self.scene.player.hurting = True
+                snd = random.choice(["aris_dmg0", "aris_dmg1", "aris_dmg2", "aris_dmg3"])
+                if not self.gameManager.arisChannel.get_busy():
+                    self.gameManager.sounds[snd].play()
                 self.scene.player.hp = max(0, self.scene.player.hp - 2)
                 self.scene.player.red_hp = 0
                 self.scene.player.invincible_frame = 30
@@ -49,6 +52,7 @@ class Gunner(PhysicsEntity):
                 if abs(dis[1]) < 64:
                     # if turned left, and player is on the left
                     if self.flip and dis[0] < 0:
+                        self.gameManager.sounds["shoot"].play()
                         self.scene.projectiles.append(
                             [[self.rect().centerx - 4 - self.gameManager.assets['gun'].get_width() / 2,
                               self.rect().centery - self.gameManager.assets['enemy_bullet'].get_height()/2 + 12 - self.gameManager.assets['gun'].get_height() / 2],
@@ -60,6 +64,7 @@ class Gunner(PhysicsEntity):
 
                     # if turned right, and player is on the right
                     if not self.flip and dis[0] > 0:
+                        self.gameManager.sounds["shoot"].play()
                         self.scene.projectiles.append(
                             [[self.rect().centerx + 32 - self.gameManager.assets['gun'].get_width() / 2,
                               self.rect().centery - self.gameManager.assets['enemy_bullet'].get_height()/2 + 12 - self.gameManager.assets['gun'].get_height() / 2],

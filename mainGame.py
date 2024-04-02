@@ -3,6 +3,7 @@ import random
 import math
 import os
 
+from script.utils import print_text
 from script.clouds import Clouds
 from script.player import Player
 from script.gunner import Gunner
@@ -14,6 +15,9 @@ from script.refresher import Refresher
 from script.checkpoint import Checkpoint
 from script.neru import Neru
 from script.yuuka import Yuuka
+from script.kei import Kei
+
+from buttonRect import Button
 
 
 OCT_ANGLES = [0, math.pi/4, math.pi/2, 3*math.pi/4, math.pi, 5*math.pi/4, 3*math.pi/2, 7*math.pi/4]
@@ -34,6 +38,14 @@ class MainGame:
 
         self.player = Player(self.gameManager, (0, 0), (30, 42), self)
 
+        self.titleButton = Button("TITLE", (1280/2 - 70, 520), (140, 40), 0, 0,
+                                  [255, 210, 159], [100, 0, 35],
+                                  self.gameManager.fonts['title'], [229, 64, 64], [184, 0, 64], [229, 148, 57])
+
+        self.continueButton = Button("CONTINUE", (1280/2 - 105, 580), (210, 40), 0, 0,
+                                  [255, 210, 159], [100, 0, 35],
+                                  self.gameManager.fonts['title'], [229, 64, 64], [184, 0, 64], [229, 148, 57])
+
         self.tilemap = Tilemap(self.gameManager)
 
         self.hpchange_speed = 5
@@ -41,36 +53,47 @@ class MainGame:
         self.hp_ratio = self.player.max_hp / self.hpbar_length
         self.boss_hp_length = 600
 
-        #self.level = self.gameManager.data["level"]
-        self.level = 1
-        #self.player.id = self.gameManager.data["id"]
-        self.player.id = 4
+        self.level = self.gameManager.data["level"]
+        self.player.id = self.gameManager.data["id"]
         self.load_level(self.level)
 
+
     def load_level(self, map_id):
+        pygame.mixer.music.load(self.gameManager.musics[f"lv{map_id}"])
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.03)
+
         self.tilemap.load(f"./levels/{map_id}.json")
 
         self.leaf_spawners = []
         for tree in self.tilemap.extract([('willows', 0)], keep=True):
             self.leaf_spawners.append(pygame.Rect(4 + tree['pos'][0], 4 + tree['pos'][1], 124, 156))
 
+        self.player.hp = self.player.max_hp
+
         self.enemies = []
         self.objects = []
         self.refreshers = []
+        self.body = []
         self.victory_timer = 300
+
+        self.boss_music = False
+        self.victory_music = False
 
         self.boss_encounter = False
         self.bonfire_timer = 0
 
         self.checkpoints = []
         self.bosses = []
+        self.keis = []
         id = 1
         for checkpoint in self.tilemap.extract([('checkpoint', 0)]):
             self.checkpoints.append(Checkpoint(self.gameManager, checkpoint['pos'], (32, 32), self, id))
             id += 1
 
+        id = 0
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3),
-                                             ('spawners', 4), ('spawners', 5)]):
+                                             ('spawners', 4), ('spawners', 5), ('spawners', 6)]):
             if spawner['variant'] == 0:
                 if self.player.id == 0:
                     self.player.pos = spawner['pos']
@@ -90,6 +113,10 @@ class MainGame:
                 self.bosses.append(Neru(self.gameManager, spawner['pos'], (30, 42), self))
             elif spawner['variant'] == 5:
                 self.bosses.append(Yuuka(self.gameManager, spawner['pos'], (80, 116), self))
+            elif spawner['variant'] == 6:
+                if (str(self.level) + ";" + str(id)) not in self.gameManager.data["kei"]:
+                    self.keis.append(Kei(self.gameManager, self, self.level, id, spawner['pos'], (32, 32)))
+                id += 1
 
         self.projectiles = []
         self.player_projectiles = []
@@ -117,9 +144,17 @@ class MainGame:
             # TRANSITION
             if not len(self.bosses):
                 self.victory_timer = max(0, self.victory_timer - 1)
+                if not self.victory_music:
+                    pygame.mixer.music.load(self.gameManager.musics["victory"])
+                    pygame.mixer.music.play(-1)
+                    pygame.mixer.music.set_volume(0.03)
+                    self.gameManager.sounds["win"].play()
+                    self.victory_music = True
                 if not self.victory_timer:
                     self.transition += 1
                     if self.transition > 30:
+                        if self.level == 1:
+                            self.gameManager.changeState("ending")
                         self.level = min(self.level + 1, len(os.listdir('levels')) - 1)
                         self.player.id = 0
                         self.load_level(self.level)
@@ -174,6 +209,10 @@ class MainGame:
                 boss.update(self.tilemap)
                 boss.render(self.display, offset=render_scroll)
 
+            for body in self.body.copy():
+                body.update(self.tilemap)
+                body.render(self.display, offset=render_scroll)
+
             # SPAWNING OBJECTS
             for object in self.objects.copy():
                 object.update(self.tilemap)
@@ -183,6 +222,10 @@ class MainGame:
             for item in self.items.copy():
                 item.update(self.tilemap)
                 item.render(self.display, offset=render_scroll)
+
+            for kei in self.keis.copy():
+                kei.update()
+                kei.render(self.display, offset=render_scroll)
 
             # SPAWNING REFRESHERS
             for refresher in self.refreshers.copy():
@@ -231,13 +274,15 @@ class MainGame:
                     self.projectiles.remove(projectile)
                 elif not self.player.dashing:
                     if self.player.rect().colliderect((projectile[0][0], projectile[0][1], img.get_width(), img.get_height())):
-                        print("NORMAL BULLET")
                         for i in range(4):
                             self.sparks.append(Spark((projectile[0][0] + img.get_width()/2, projectile[0][1] + img.get_height()/2),
                                                      random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
                                                      2 + random.random(), color=(255, 136, 0)))
                         self.projectiles.remove(projectile)
                         self.player.hurting = True
+                        snd = random.choice(["aris_dmg0", "aris_dmg1", "aris_dmg2", "aris_dmg3"])
+                        if not self.gameManager.arisChannel.get_busy():
+                            self.gameManager.sounds[snd].play()
                         self.player.hp = max(0, self.player.hp - projectile[4])
                         if not self.player.red_hp:
                             self.player.red_hp = 0.6*projectile[4]
@@ -281,7 +326,6 @@ class MainGame:
                 elif not self.player.dashing:
                     if self.player.rect().colliderect(
                             (projectile[0][0], projectile[0][1], img.get_width(), img.get_height())):
-                        print("SPECIAL BULLET")
                         for i in range(4):
                             self.sparks.append(
                                 Spark((projectile[0][0] + img.get_width() / 2, projectile[0][1] + img.get_height() / 2),
@@ -289,6 +333,9 @@ class MainGame:
                                       2 + random.random(), color=(255, 136, 0)))
                         self.special_bullets.remove(projectile)
                         self.player.hurting = True
+                        snd = random.choice(["aris_dmg0", "aris_dmg1", "aris_dmg2", "aris_dmg3"])
+                        if not self.gameManager.arisChannel.get_busy():
+                            self.gameManager.sounds[snd].play()
                         self.player.hp = max(0, self.player.hp - projectile[4])
                         if not self.player.red_hp:
                             self.player.red_hp = 0.6 * projectile[4]
@@ -317,6 +364,7 @@ class MainGame:
                 else:
                     for enemy in self.enemies.copy():
                         if enemy.rect().colliderect((projectile[0][0], projectile[0][1], img.get_width(), img.get_height())):
+                            self.gameManager.sounds["hit"].play()
                             for i in range(4):
                                 self.sparks.append(Spark((projectile[0][0] + img.get_width()/2, projectile[0][1] + img.get_height()/2),
                                                          random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
@@ -327,6 +375,7 @@ class MainGame:
                             break
                     for boss in self.bosses.copy():
                         if boss.rect().colliderect((projectile[0][0], projectile[0][1], img.get_width(), img.get_height())) and not boss.invincible:
+                            self.gameManager.sounds["hit"].play()
                             for i in range(4):
                                 self.sparks.append(Spark((projectile[0][0] + img.get_width()/2, projectile[0][1] + img.get_height()/2),
                                                          random.random() - 0.5 + (math.pi if projectile[1][0] > 0 else 0),
@@ -355,7 +404,22 @@ class MainGame:
 
             self.advanced_hpbar()
             if self.boss_encounter:
+                if not self.boss_music:
+                    if type(self.bosses[0]) == Neru:
+                        pygame.mixer.music.load(self.gameManager.musics["neru"])
+                        pygame.mixer.music.play(-1)
+                        pygame.mixer.music.set_volume(0.03)
+                        self.gameManager.sounds["neru_start"].play()
+                    elif type(self.bosses[0]) == Yuuka:
+                        pygame.mixer.music.load(self.gameManager.musics["yuuka"])
+                        pygame.mixer.music.play(-1)
+                        pygame.mixer.music.set_volume(0.03)
+                        self.gameManager.sounds["yuuka_start"].play()
+                    self.boss_music = True
                 self.boss_hpbar()
+
+            if not len(self.keis):
+                print_text(self.display, "All keis collected", (self.display.get_width() - 126, 5), self.gameManager.fonts["smol"], color = (255, 255, 255))
 
             if self.transition:
                 transition_surf = pygame.Surface(self.display.get_size())
@@ -366,13 +430,40 @@ class MainGame:
             screenshake_offset = (random.random() * self.screenshake - self.screenshake/2, random.random() * self.screenshake - self.screenshake/2)
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), screenshake_offset)
 
+            for enemy in self.enemies.copy():
+                enemy.death()
+            for boss in self.bosses.copy():
+                boss.death()
+            if not self.dead:
+                self.player.death()
+        else:
+            pygame.draw.rect(self.screen, (255, 210, 159), (80, 60, 1120, 600))
+            pygame.draw.rect(self.screen, (229, 148, 57), (80, 60, 1120, 600), 3)
+
+            print_text(self.screen, "PAUSED", (1280/2 - 70, 100), self.gameManager.fonts['title'], color=(229, 64, 64))
+            if len(self.keis):
+                self.screen.blit(pygame.transform.scale(self.gameManager.assets["keiBlack"], (128,128)), (1280/2 - 64, 720/2 - 64 - 40))
+                print_text(self.screen, "Still " + str(len(self.keis)) + " Keis remains!", (1280 / 2 - 170, 720/2 + 50), self.gameManager.fonts['title'],
+                           color=(0, 0, 0))
+            else:
+                self.screen.blit(pygame.transform.scale(self.gameManager.assets["kei"], (128,128)), (1280/2 - 64, 720/2 - 64 - 40))
+                print_text(self.screen, "All Keis has been collected!", (1280 / 2 - 230, 720 / 2 + 50),
+                           self.gameManager.fonts['title'],
+                           color=(0, 0, 0))
+
+            self.titleButton.render(self.screen)
+            self.continueButton.render(self.screen)
+
+            if self.titleButton.update():
+                self.gameManager.changeState("main_menu")
+            if self.continueButton.update():
+                self.paused = not self.paused
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.gameManager.data["level"] = self.level
                 self.gameManager.data["id"] = self.player.id
                 self.gameManager.isRunning = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                self.gameManager.changeState("main_menu")
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT and not self.paused:
                     self.movement[0] = True
@@ -384,11 +475,12 @@ class MainGame:
                     self.pressing[0] = True
                 if event.key == pygame.K_DOWN and not self.paused:
                     self.pressing[1] = True
-                if event.key == pygame.K_c and not self.paused:
+                    self.player.duck = True
+                if event.key == self.gameManager.keys["fire"] and not self.paused:
                     self.player.charge = 1
-                if event.key == pygame.K_x and not self.paused:
+                if event.key == self.gameManager.keys["jump"] and not self.paused:
                     self.player.jump()
-                if event.key == pygame.K_z and not self.paused:
+                if event.key == self.gameManager.keys["dash"] and not self.paused:
                     self.player.dash(self.pressing)
                 if event.key == pygame.K_SPACE:
                     self.paused = not self.paused
@@ -404,15 +496,9 @@ class MainGame:
                     self.pressing[0] = False
                 if event.key == pygame.K_DOWN and not self.paused:
                     self.pressing[1] = False
-                if event.key == pygame.K_c and not self.paused:
+                    self.player.duck = False
+                if event.key == self.gameManager.keys["fire"] and not self.paused:
                     self.player.shoot()
-
-        for enemy in self.enemies.copy():
-            enemy.death()
-        for boss in self.bosses.copy():
-            boss.death()
-        if not self.dead:
-            self.player.death()
 
     def advanced_hpbar(self):
         self.player.hp = min(self.player.hp + self.player.red_hp / 360, self.player.hp + self.player.red_hp)
