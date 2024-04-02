@@ -5,6 +5,7 @@ import random
 
 
 from script.spark import Spark
+from .neruCorpse import NeruDed
 
 # 270, 285, 300, 315, 330, 30, 45, 60, 75, 90
 ANGLES = [3*math.pi/2, 19*math.pi/12, 5*math.pi/3, 7*math.pi/4, 11*math.pi/6, math.pi/6, math.pi/4, math.pi/3, 5*math.pi/12, math.pi/2]
@@ -53,6 +54,9 @@ class Neru(PhysicsEntity):
             dis = (self.scene.player.pos[0] - self.pos[0], self.scene.player.pos[1] - self.pos[1])
             if not self.scene.player.invincible_frame:
                 self.scene.player.hurting = True
+                snd = random.choice(["aris_dmg0", "aris_dmg1", "aris_dmg2", "aris_dmg3"])
+                if not self.gameManager.arisChannel.get_busy():
+                    self.gameManager.sounds[snd].play()
                 self.scene.player.hp = max(0, self.scene.player.hp - 5)
                 self.scene.player.red_hp = 0
                 self.scene.player.invincible_frame = 30
@@ -64,8 +68,6 @@ class Neru(PhysicsEntity):
         if self.collisions['down'] and (self.previous_choice == "volley_right" or self.previous_choice == "volley_left"):
             self.dx = 0
 
-        #print("ACTION TIME: ", self.actionTimer)
-        #print("WAIT TIME: ", self.waitTimer)
         if self.enrage_attack:
             self.teleport = False
             self.hurting = True
@@ -79,6 +81,7 @@ class Neru(PhysicsEntity):
 
         if self.hp <= self.max_hp / 2 and not self.enrage:
             self.set_action("idle")
+            self.gameManager.sounds['neru_rage'].play()
             self.enrage = True
             self.enrage_attack = True
             self.teleport = True
@@ -127,6 +130,9 @@ class Neru(PhysicsEntity):
 
     def death(self):
         if self.hp <= 0:
+            self.gameManager.sounds['neru_die'].play()
+            self.gameManager.sounds['fell'].play()
+            self.scene.body.append(NeruDed(self.gameManager, [self.topleft[0] + 6*32, self.topleft[1] + 3 * 32], (43,25), self.scene))
             self.scene.boss_encounter = False
             self.scene.bosses.remove(self)
             self.scene.projectiles.clear()
@@ -216,6 +222,7 @@ class Neru(PhysicsEntity):
             nor_dis_x = dis_x / dis * 5
             nor_dis_y = dis_y / dis * 5
 
+            self.gameManager.sounds['gunshot'].play()
             self.scene.projectiles.append(
                 [[self.rect().centerx - 4,
                   self.rect().centery - self.gameManager.assets['smg_bullet'].get_height() / 2 + 12],
@@ -263,6 +270,7 @@ class Neru(PhysicsEntity):
             dis = math.sqrt(dis_x**2 + dis_y**2)
             nor_dis_x = dis_x / dis * 5
             nor_dis_y = dis_y / dis * 5
+            self.gameManager.sounds['gunshot'].play()
 
             self.scene.projectiles.append(
                 [[self.rect().centerx - 4,
@@ -295,6 +303,7 @@ class Neru(PhysicsEntity):
 
     def raging(self):
         self.render_warning = False
+        self.gameManager.sounds['gunshot'].play()
         for angle in ANGLES:
             angle_x = math.sin(angle)*5
             angle_y = math.cos(angle)*5

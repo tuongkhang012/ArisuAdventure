@@ -27,7 +27,6 @@ class Refresher:
                 self.scene.player.dash_cnt = 1
                 for i in range(30):
                     angle = random.random() * math.pi * 2
-                    speed = random.random() * 5
                     self.scene.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
                 self.set_action("used")
                 self.timer = 120

@@ -22,6 +22,7 @@ class Checkpoint:
     def update(self, tilemap):
         if self.scene.player.rect().colliderect(self.rect()):
             if self.action == "untouched":
+                self.gameManager.sounds["checkpoint"].play()
                 self.set_action("burn")
                 self.scene.player.id = self.id
                 self.scene.bonfire_timer = 90

@@ -11,6 +11,7 @@ class Player(PhysicsEntity):
         self.air_time = 0
         self.jump_cnt = 1
         self.wall_slide = False
+        self.duck = False
 
         # FOR DASHING
         self.dash_cnt = 1
@@ -99,6 +100,8 @@ class Player(PhysicsEntity):
                     self.set_action("run")
                 else:
                     self.set_action("runAlt")
+            elif self.duck:
+                self.set_action("duck")
             else:
                 if self.dash_cnt:
                     self.set_action("idle")
@@ -136,17 +139,19 @@ class Player(PhysicsEntity):
                        offset[0],
                        self.rect().centery + 8 - self.gameManager.assets['gun'].get_height() / 2 - offset[1]))
             if self.gun_anim.done:
+                self.gameManager.sounds["shoot"].play()
                 if self.charge >= 30:
+                    self.gameManager.sounds["charged_shot"].play()
                     self.scene.player_projectiles.append(
                         [[self.rect().centerx + 32 - 40 * flip_flag - self.gameManager.assets['gun'].get_width() / 2,
                           self.rect().centery - self.gameManager.assets['charged_bullet'].get_height()/2 + 12 - self.gameManager.assets['gun'].get_height() / 2],
-                         [4 - 8 * flip_flag, 0], 0, self.gameManager.assets['charged_bullet'], 20])
+                         [7 - 14 * flip_flag, 0], 0, self.gameManager.assets['charged_bullet'], 15])
                     self.charge = 0
                 else:
                     self.scene.player_projectiles.append(
                         [[self.rect().centerx + 32 - 40 * flip_flag - self.gameManager.assets['gun'].get_width() / 2,
                           self.rect().centery - self.gameManager.assets['ally_bullet'].get_height()/2 + 12 - self.gameManager.assets['gun'].get_height() / 2],
-                         [4 - 8 * flip_flag, 0], 0, self.gameManager.assets['ally_bullet'], 5])
+                         [7 - 14 * flip_flag, 0], 0, self.gameManager.assets['ally_bullet'], 5])
                 self.shooting = False
 
     # THE BOOLEAN RETURN IS USED TO CHECK IF THE PLAYER JUMPED
@@ -157,17 +162,20 @@ class Player(PhysicsEntity):
             else:
                 self.set_action("prejumpAlt")
             if self.flip and self.last_movement[0] < 0:
+                self.gameManager.sounds["jump"].play()
                 self.velocity[0] = 5
                 self.velocity[1] = -5
                 self.jump_cnt = max(0, self.jump_cnt - 1)
                 return True
             elif not self.flip and self.last_movement[0] > 0:
+                self.gameManager.sounds["jump"].play()
                 self.velocity[0] = -5
                 self.velocity[1] = -5
                 self.jump_cnt = max(0, self.jump_cnt - 1)
                 return True
 
         elif self.jump_cnt:
+            self.gameManager.sounds["jump"].play()
             if self.dash_cnt:
                 self.set_action("prejump")
             else:
@@ -180,6 +188,7 @@ class Player(PhysicsEntity):
 
     def dash(self, keys):
         if self.dash_cnt:
+            self.gameManager.sounds["dash"].play()
             self.scene.screenshake = max(8, self.scene.screenshake)
             self.set_action("dash")
             if self.collisions['down']:
@@ -220,6 +229,7 @@ class Player(PhysicsEntity):
 
     def death(self):
         if self.hp <= 0:
+            self.gameManager.sounds["aris_die"].play()
             self.scene.dead += 1
             self.scene.screenshake = max(16, self.scene.screenshake)
             for i in range(30):
