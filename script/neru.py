@@ -16,7 +16,7 @@ class Neru(PhysicsEntity):
 
         self.name = "Mikamo Neru"
         self.max_hp = 150
-        self.hp = 76
+        self.hp = 150
         self.active_radius = 10*32
 
         self.topleft = 0
