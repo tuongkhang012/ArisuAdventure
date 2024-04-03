@@ -153,7 +153,7 @@ class Yuuka(PhysicsEntity):
     def death(self):
         if self.hp <= 0:
             self.gameManager.sounds["yuuka_die"].play()
-            self.gameManager.sounds["fell"].stop()
+            self.gameManager.sounds["fell"].play()
             for i in range(7):
                 if str(23) + ";" + str(-60 - i*1) in self.scene.tilemap.tilemap:
                     del self.scene.tilemap.tilemap[str(23) + ";" + str(-60 - i*1)]

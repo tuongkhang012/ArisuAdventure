@@ -5,9 +5,7 @@ from mainMenu import MainMenu
 from mainGame import MainGame
 from endScene import EndScene
 from option import Option
-
-# icon = pygame.image.load("artwork/sob.png")
-# pygame.display.set_icon(icon)
+from intro import Intro
 
 
 class GameManager:
@@ -24,6 +22,8 @@ class GameManager:
             self.currentState = EndScene(self)
         elif newState == "options":
             self.currentState = Option(self)
+        elif newState == "intro":
+            self.currentState = Intro(self)
 
     def __init__(self):
         pygame.init()
@@ -34,7 +34,6 @@ class GameManager:
         self.SCREENHEIGHT = 720
         self.FPS = 30
         self.CAPTION = "Arisu Adventure"
-        self.icon = None
         self.data = {
             "level": 0,
             "id": 0,
@@ -42,8 +41,6 @@ class GameManager:
         }
 
         pygame.display.set_caption(self.CAPTION)
-        # icon = pygame.image.load("artwork/sob.png")
-        # pygame.display.set_icon(icon)
 
         self.screen = pygame.display.set_mode((self.SCREENWIDTH, self.SCREENHEIGHT))
         # FOR SCALING PURPOSES
@@ -53,6 +50,8 @@ class GameManager:
         self.cameraSize = pygame.Rect
 
         self.arisChannel = pygame.mixer.Channel(7)
+        self.icon = load_image("icon/sob.png")
+        pygame.display.set_icon(self.icon)
 
         self.keys = {
             "fire": pygame.K_c,
@@ -76,6 +75,7 @@ class GameManager:
             "willows": load_images("tilemap/objects/Willows"),
             "spawners": load_images("tilemap/spawner"),
             "onedoorleft": load_images("tilemap/onedoorleft"),
+            "signs": load_images("signs"),
 
             "box/idle": Animation(load_images("tilemap/objects/Boxes"), img_dur=1),
 
@@ -149,11 +149,13 @@ class GameManager:
             "main_bg1": load_image("image/main_bg1.jpg"),
             "ending": load_image("image/ending.png"),
             "option": load_image("image/option.png"),
+            "intro": load_image("image/intro.jpg"),
         }
         self.fonts = {
             "title": pygame.freetype.Font("./asset/font/Pixellari.ttf", 40),
             "smol": pygame.freetype.Font("./asset/font/Pixellari.ttf", 15),
             "big": pygame.freetype.Font("./asset/font/Pixellari.ttf", 30),
+            "border": pygame.freetype.Font("./asset/font/Pixellari.ttf", 42),
             "boss": pygame.freetype.Font("./asset/font/AncientModernTales-a7Po.ttf", 20),
         }
         self.sounds = {
@@ -178,6 +180,12 @@ class GameManager:
             "jump": pygame.mixer.Sound("./asset/sounds/jump.mp3"),
             "win": pygame.mixer.Sound("./asset/sounds/panpakapan.wav"),
             "charged_shot": pygame.mixer.Sound("./asset/sounds/charged_shot.wav"),
+
+            "kuyashii": pygame.mixer.Sound("./asset/sounds/kuyashii.mp3"),
+            "knock": pygame.mixer.Sound("./asset/sounds/knock.mp3"),
+            "retro_success": pygame.mixer.Sound("./asset/sounds/retro_success.mp3"),
+            "sad": pygame.mixer.Sound("./asset/sounds/sad.mp3"),
+            "angry": pygame.mixer.Sound("./asset/sounds/angry.mp3"),
         }
 
         self.sounds["hit"].set_volume(0.1)
@@ -200,6 +208,11 @@ class GameManager:
         self.sounds["jump"].set_volume(0.05)
         self.sounds["win"].set_volume(0.1)
         self.sounds["charged_shot"].set_volume(0.05)
+        self.sounds["kuyashii"].set_volume(0.1)
+        self.sounds["knock"].set_volume(0.4)
+        self.sounds["retro_success"].set_volume(0.1)
+        self.sounds["sad"].set_volume(0.1)
+        self.sounds["angry"].set_volume(0.2)
 
 
         self.musics = {
@@ -211,6 +224,7 @@ class GameManager:
             "neru": "./asset/music/Burning Love.wav",
             "yuuka": "./asset/music/kitsunebi.wav",
             "ending": "./asset/music/Ending.ogg",
+            "intro": "./asset/music/Pixel Time.wav",
         }
         self.fontSmol = pygame.freetype.Font("./asset/font/Pixellari.ttf", 20)
 

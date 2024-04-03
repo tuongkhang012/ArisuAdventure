@@ -54,7 +54,7 @@ class MainMenu:
                 "id": 0,
                 "kei": [],
             }
-            self.gameManager.changeState("main_game")
+            self.gameManager.changeState("intro")
 
         if self.saveFound and self.continueButton.update():
             self.gameManager.changeState("main_game")

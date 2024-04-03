@@ -77,6 +77,10 @@ class MainGame:
         self.body = []
         self.victory_timer = 300
 
+        self.player.dx = 0
+        self.player.dy = 0
+        self.player.velocity = [0, 0]
+
         self.boss_music = False
         self.victory_music = False
 
