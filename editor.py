@@ -44,6 +44,7 @@ class Editor:
             "willows": load_images("tilemap/objects/Willows"),
             'spawners': load_images('tilemap/spawner'),
             "onedoorleft": load_images("tilemap/onedoorleft"),
+            "signs": load_images("signs"),
 
             "checkpoint": load_images("checkpoint/untouched"),
         }
@@ -53,7 +54,7 @@ class Editor:
         self.tilemap = Tilemap(self, tile_size=32)
 
         try:
-            self.tilemap.load("./levels/0.json")
+            self.tilemap.load("./levels/1.json")
         except FileNotFoundError:
             pass
 
@@ -175,7 +176,7 @@ class Editor:
                     if event.key == pygame.K_g:
                         self.ongrid = not self.ongrid
                     if event.key == pygame.K_o:
-                        self.tilemap.save("./levels/0.json")
+                        self.tilemap.save("./levels/1.json")
                     if event.key == pygame.K_t:
                         self.tilemap.autotile()
                     if event.key == pygame.K_LSHIFT:
